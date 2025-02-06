@@ -1,0 +1,11 @@
+{
+	"id": "obsidian-image-share",
+	"name": "Image Share",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "Share selected text as beautiful images",
+	"author": "shawn",
+	"authorUrl": "https://obsidian.md",
+	"fundingUrl": "https://obsidian.md/pricing",
+	"isDesktopOnly": false
+}
