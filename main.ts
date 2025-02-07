@@ -163,7 +163,9 @@ class ImageGenerator {
             tempDiv.style.wordBreak = 'break-word';
             tempDiv.style.fontSize = '14px';
             tempDiv.style.lineHeight = '1.5';
-            tempDiv.style.whiteSpace = 'pre-wrap';  // 保留换行和空格
+            tempDiv.style.whiteSpace = 'pre-wrap';
+            // 添加这一行确保容器不会被压缩
+            tempDiv.style.minHeight = 'min-content';
 
             // 添加日期
             const dateDiv = tempDiv.createDiv();
@@ -186,14 +188,14 @@ class ImageGenerator {
             );
 
             document.body.appendChild(tempDiv);
+            
+            // 获取实际内容高度，包括内边距
+            const actualHeight = tempDiv.clientHeight;
+            // 确保最小高度
+            const minHeight = 200;
+            const finalHeight = Math.max(actualHeight, minHeight);
 
-            // 获取实际内容高度并添加一些内边距
-            const actualHeight = tempDiv.offsetHeight + 40;
-            const minHeight = 300;
-            const maxHeight = 20000;  // 增加最大高度限制
-            const finalHeight =2000;// Math.min(Math.max(actualHeight, minHeight), maxHeight);
-
-            // 使用 html2canvas 渲染
+            // 使用 html2canvas 渲染时使用计算出的高度
             const renderedCanvas = await html2canvas(tempDiv, {
                 width: this.currentTemplate.width,
                 height: finalHeight,
@@ -201,14 +203,14 @@ class ImageGenerator {
                 scale: 2,
                 windowWidth: this.currentTemplate.width,
                 windowHeight: finalHeight,
-                logging: false,
+                logging: true,
                 useCORS: true,
                 onclone: (clonedDoc) => {
                     const clonedDiv = clonedDoc.querySelector('.markdown-preview-view') as HTMLElement;
                     if (clonedDiv) {
                         clonedDiv.style.width = `${this.currentTemplate.width - 40}px`;
                         clonedDiv.style.height = `${finalHeight}px`;
-                        clonedDiv.style.overflow = 'visible';  // 改为 visible
+                        clonedDiv.style.overflow = 'visible';
                     }
                 }
             });
@@ -260,59 +262,14 @@ class TextPreviewModal extends Modal {
         contentEl.empty();
         contentEl.addClass('image-share-modal');
 
-        // 创建可调整大小的容器
-        const resizableContainer = contentEl.createDiv({ cls: 'resizable-container' });
+        const previewContainer = contentEl.createDiv({ cls: 'image-preview-container' });
         
-        const previewContainer = resizableContainer.createDiv({ cls: 'image-preview-container' });
-        previewContainer.createEl('h2', { text: '图片预览' });
-
-        const templateSelector = previewContainer.createDiv({ cls: 'template-selector' });
-        const canvasContainer = previewContainer.createDiv({ cls: 'canvas-container' });
-
-        // 添加调整大小的手柄
-        const resizeHandle = resizableContainer.createDiv({ cls: 'resize-handle' });
-
-        // 处理拖拽调整大小
-        const handleMouseDown = (e: MouseEvent) => {
-            this.isResizing = true;
-            this.startX = e.clientX;
-            this.startY = e.clientY;
-            this.startWidth = resizableContainer.offsetWidth;
-            this.startHeight = resizableContainer.offsetHeight;
-
-            // 添加临时事件监听器
-            document.addEventListener('mousemove', handleMouseMove);
-            document.addEventListener('mouseup', handleMouseUp);
-            document.body.style.cursor = 'se-resize';
-        };
-
-        const handleMouseMove = (e: MouseEvent) => {
-            if (!this.isResizing) return;
-
-            const width = this.startWidth + (e.clientX - this.startX);
-            const height = this.startHeight + (e.clientY - this.startY);
-
-            // 设置最小尺寸
-            const minWidth = 400;
-            const minHeight = 300;
-
-            resizableContainer.style.width = `${Math.max(width, minWidth)}px`;
-            resizableContainer.style.height = `${Math.max(height, minHeight)}px`;
-        };
-
-        const handleMouseUp = () => {
-            this.isResizing = false;
-            document.removeEventListener('mousemove', handleMouseMove);
-            document.removeEventListener('mouseup', handleMouseUp);
-            document.body.style.cursor = 'default';
-        };
-
-        resizeHandle.addEventListener('mousedown', handleMouseDown);
-
-        // 等待初始画布渲染完成
-        await this.imageGenerator.updateCanvas();
-        canvasContainer.appendChild(this.imageGenerator.getCanvas());
-
+        // 创建顶部操作区
+        const headerDiv = previewContainer.createDiv({ cls: 'header' });
+        headerDiv.createEl('h2', { text: '图片预览' });
+        
+        // 创建模板选择器
+        const templateSelector = headerDiv.createDiv({ cls: 'template-selector' });
         SHARE_TEMPLATES.forEach(template => {
             const templateButton = templateSelector.createEl('button', {
                 cls: 'template-button',
@@ -332,19 +289,22 @@ class TextPreviewModal extends Modal {
             }
         });
 
-        // 添加下载按钮
-        const downloadButton = previewContainer.createEl('button', {
-            cls: 'download-button'
-        });
+        // 创建画布容器
+        const canvasContainer = previewContainer.createDiv({ cls: 'canvas-container' });
         
-        // 添加下载图标
-        downloadButton.innerHTML = `<svg viewBox="0 0 24 24" width="24" height="24">
+        // 等待初始画布渲染完成
+        await this.imageGenerator.updateCanvas();
+        canvasContainer.appendChild(this.imageGenerator.getCanvas());
+
+        // 添加下载按钮
+        const downloadButton = contentEl.createEl('button', {
+            cls: 'download-button',
+            attr: {'title': '下载图片'}
+        });
+        downloadButton.innerHTML = `<svg viewBox="0 0 24 24">
             <path fill="currentColor" d="M12 15.5a.74.74 0 0 1-.53-.22l-3-3A.75.75 0 0 1 9.53 11L12 13.44L14.47 11a.75.75 0 0 1 1.06 1.06l-3 3a.74.74 0 0 1-.53.22zm0-7.5a.75.75 0 0 1 .75.75v6a.75.75 0 0 1-1.5 0v-6A.75.75 0 0 1 12 8z"/>
             <path fill="currentColor" d="M19.5 20.5h-15a.75.75 0 0 1 0-1.5h15a.75.75 0 0 1 0 1.5z"/>
         </svg>`;
-
-        // 添加提示文本
-        downloadButton.setAttribute('title', '下载图片');
 
         downloadButton.onclick = () => {
             const link = document.createElement('a');
@@ -365,7 +325,6 @@ interface ShareTemplate {
     id: string;
     name: string;
     width: number;
-    height: number;
     render: (ctx: CanvasRenderingContext2D, text: string) => Promise<void>;
 }
 
@@ -374,15 +333,13 @@ const SHARE_TEMPLATES: ShareTemplate[] = [
     {
         id: 'default',
         name: '默认模板',
-        width: 600,  // 进一步增加宽度
-        height: 300,
+        width: 600,
         render: async () => {}
     },
     {
         id: 'dark',
         name: '深色模板',
-        width: 600,  // 进一步增加宽度
-        height: 300,
+        width: 600,
         render: async () => {}
     }
 ];
