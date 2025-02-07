@@ -151,33 +151,31 @@ class ImageGenerator {
 
     public async updateCanvas() {
         try {
-            // 创建临时容器
             const tempDiv = document.createElement('div');
-            tempDiv.className = 'markdown-preview-view';
+            tempDiv.className = 'markdown-preview-view markdown-rendered';
             tempDiv.style.position = 'absolute';
             tempDiv.style.left = '-9999px';
             tempDiv.style.width = `${this.currentTemplate.width - 40}px`;
-            tempDiv.style.background = this.currentTemplate.id === 'dark' ? '#2d3436' : '#e8ecf9';
-            tempDiv.style.padding = '20px';
+            tempDiv.style.background = this.currentTemplate.id === 'dark' ? '#2d3436' : '#f8f9fc';
+            tempDiv.style.padding = '24px';
             tempDiv.style.boxSizing = 'border-box';
             tempDiv.style.wordBreak = 'break-word';
-            tempDiv.style.fontSize = '14px';
+            tempDiv.style.fontSize = '15px';
             tempDiv.style.lineHeight = '1.5';
             tempDiv.style.whiteSpace = 'pre-wrap';
-            // 添加这一行确保容器不会被压缩
-            tempDiv.style.minHeight = 'min-content';
-            tempDiv.style.height = 'auto'
+            tempDiv.style.fontFamily = '"PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", "WenQuanYi Micro Hei", sans-serif';
+            tempDiv.style.color = this.currentTemplate.id === 'dark' ? '#e2e2e2' : '#2c3e50';
+            tempDiv.style.height = 'auto';
 
             // 添加日期
-            const dateDiv = tempDiv.createDiv();
+            const dateDiv = tempDiv.createDiv({ cls: 'metadata-container' });
             dateDiv.style.color = this.currentTemplate.id === 'dark' ? '#999999' : '#666666';
-            dateDiv.style.fontSize = '14px';
-            dateDiv.style.marginBottom = '16px';
+            dateDiv.style.fontSize = '13px';
+            dateDiv.style.marginBottom = '20px';
             dateDiv.textContent = new Date().toLocaleDateString();
 
             // 添加内容容器
-            const contentDiv = tempDiv.createDiv();
-            contentDiv.style.color = this.currentTemplate.id === 'dark' ? '#ffffff' : '#333333';
+            const contentDiv = tempDiv.createDiv({ cls: 'markdown-preview-sizer' });
             
             // 渲染 Markdown
             await MarkdownRenderer.render(
@@ -188,6 +186,59 @@ class ImageGenerator {
                 new Component()
             );
 
+            // 应用优化的样式
+            const styleSheet = document.createElement('style');
+            styleSheet.textContent = `
+                .markdown-preview-view {
+                    letter-spacing: 0.05em;
+                }
+                .markdown-preview-view h1,
+                .markdown-preview-view h2,
+                .markdown-preview-view h3 {
+                    font-weight: 600;
+                    line-height: 1.3;
+                    margin: 1.2em 0 0.6em;
+                }
+                .markdown-preview-view h1 { font-size: 1.6em; }
+                .markdown-preview-view h2 { font-size: 1.4em; }
+                .markdown-preview-view h3 { font-size: 1.2em; }
+                .markdown-preview-view p {
+                    margin: 0.8em 0;
+                    line-height: 1.6;
+                }
+                .markdown-preview-view ul,
+                .markdown-preview-view ol {
+                    margin: 0.4em 0;
+                    padding-left: 1.2em;
+                }
+                .markdown-preview-view li {
+                    margin: 0.2em 0;
+                    line-height: 1.5;
+                }
+                .markdown-preview-view code {
+                    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+                    font-size: 0.9em;
+                    padding: 0.2em 0.4em;
+                    border-radius: 3px;
+                    background: ${this.currentTemplate.id === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)'};
+                }
+                .markdown-preview-view blockquote {
+                    margin: 1em 0;
+                    padding: 0.2em 0 0.2em 0.8em;
+                    border-left: 3px solid ${this.currentTemplate.id === 'dark' ? '#666' : '#ddd'};
+                    color: ${this.currentTemplate.id === 'dark' ? '#bbb' : '#666'};
+                }
+                .markdown-preview-view strong {
+                    font-weight: 600;
+                    color: ${this.currentTemplate.id === 'dark' ? '#fff' : '#000'};
+                }
+                .markdown-preview-view em {
+                    font-style: normal;
+                    border-bottom: 1px dashed ${this.currentTemplate.id === 'dark' ? '#666' : '#999'};
+                    padding-bottom: 0.1em;
+                }
+            `;
+            document.head.appendChild(styleSheet);
             document.body.appendChild(tempDiv);
             
             // 获取实际内容高度，包括内边距
@@ -221,6 +272,7 @@ class ImageGenerator {
 
             // 清理临时元素
             document.body.removeChild(tempDiv);
+            document.head.removeChild(styleSheet);
         } catch (error) {
             console.error('Error rendering markdown:', error);
         }
