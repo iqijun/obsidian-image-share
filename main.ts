@@ -166,6 +166,7 @@ class ImageGenerator {
             tempDiv.style.whiteSpace = 'pre-wrap';
             // 添加这一行确保容器不会被压缩
             tempDiv.style.minHeight = 'min-content';
+            tempDiv.style.height = 'auto'
 
             // 添加日期
             const dateDiv = tempDiv.createDiv();
@@ -190,7 +191,7 @@ class ImageGenerator {
             document.body.appendChild(tempDiv);
             
             // 获取实际内容高度，包括内边距
-            const actualHeight = tempDiv.clientHeight;
+            const actualHeight = tempDiv.scrollHeight;
             // 确保最小高度
             const minHeight = 200;
             const finalHeight = Math.max(actualHeight, minHeight);
