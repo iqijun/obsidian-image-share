@@ -1,5 +1,5 @@
 {
-	"name": "obsidian-image-share",
+	"name": "image-share",
 	"version": "1.0.0",
 	"description": "share text as image",
 	"main": "main.js",
@@ -8,8 +8,8 @@
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"version": "node version-bump.mjs && git add manifest.json versions.json"
 	},
-	"keywords": [],
-	"author": "shawn",
+	"keywords": ["share","image"],
+	"author": "Shawn",
 	"license": "MIT",
 	"devDependencies": {
 		"@types/node": "^16.11.6",

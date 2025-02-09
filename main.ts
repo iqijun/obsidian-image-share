@@ -1,5 +1,6 @@
 import { App, Editor, Modal, Plugin, Menu, MarkdownRenderer, Component } from 'obsidian';
 import './styles.css';
+import './markdown-sspai.css';
 import html2canvas from 'html2canvas';
 
 // Remember to rename these classes and interfaces!
@@ -189,53 +190,177 @@ class ImageGenerator {
             // 应用优化的样式
             const styleSheet = document.createElement('style');
             styleSheet.textContent = `
-                .markdown-preview-view {
-                    letter-spacing: 0.05em;
+                .markdown-here-wrapper {
+                    font-size: 16px;
+                    line-height: 1.8em;
+                    letter-spacing: 0.1em;
                 }
-                .markdown-preview-view h1,
-                .markdown-preview-view h2,
-                .markdown-preview-view h3 {
-                    font-weight: 600;
-                    line-height: 1.3;
-                    margin: 1.2em 0 0.6em;
+                
+                
+                pre, code {
+                    font-size: 14px;
+                    font-family: Roboto, 'Courier New', Consolas, Inconsolata, Courier, monospace;
+                    margin: auto 5px;
                 }
-                .markdown-preview-view h1 { font-size: 1.6em; }
-                .markdown-preview-view h2 { font-size: 1.4em; }
-                .markdown-preview-view h3 { font-size: 1.2em; }
-                .markdown-preview-view p {
-                    margin: 0.8em 0;
-                    line-height: 1.6;
+                
+                code {
+                    white-space: pre-wrap;
+                    border-radius: 2px;
+                    display: inline;
                 }
-                .markdown-preview-view ul,
-                .markdown-preview-view ol {
-                    margin: 0.4em 0;
-                    padding-left: 1.2em;
+                
+                pre {
+                    font-size: 15px;
+                    line-height: 1.4em;
+                    display: block; !important;
                 }
-                .markdown-preview-view li {
-                    margin: 0.2em 0;
-                    line-height: 1.5;
-                }
-                .markdown-preview-view code {
-                    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-                    font-size: 0.9em;
-                    padding: 0.2em 0.4em;
+                
+                pre code {
+                    white-space: pre;
+                    overflow: auto;
                     border-radius: 3px;
-                    background: ${this.currentTemplate.id === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)'};
+                    padding: 1px 1px;
+                    display: block !important;
                 }
-                .markdown-preview-view blockquote {
-                    margin: 1em 0;
-                    padding: 0.2em 0 0.2em 0.8em;
-                    border-left: 3px solid ${this.currentTemplate.id === 'dark' ? '#666' : '#ddd'};
-                    color: ${this.currentTemplate.id === 'dark' ? '#bbb' : '#666'};
+                
+                strong, b{
+                    color: #BF360C;
                 }
-                .markdown-preview-view strong {
-                    font-weight: 600;
-                    color: ${this.currentTemplate.id === 'dark' ? '#fff' : '#000'};
+                
+                em, i {
+                    color: #009688;
                 }
-                .markdown-preview-view em {
-                    font-style: normal;
-                    border-bottom: 1px dashed ${this.currentTemplate.id === 'dark' ? '#666' : '#999'};
-                    padding-bottom: 0.1em;
+                
+                hr {
+                    border: 1px solid #BF360C;
+                    margin: 1.5em auto;
+                }
+                
+                p {
+                    margin: 1.5em 5px !important;
+                }
+                
+                table, pre, dl, blockquote, q, ul, ol {
+                    margin: 10px 5px;
+                }
+                
+                ul, ol {
+                    padding-left: 15px;
+                }
+                
+                li {
+                    margin: 10px;
+                }
+                
+                li p {
+                    margin: 10px 0 !important;
+                }
+                
+                ul ul, ul ol, ol ul, ol ol {
+                    margin: 0;
+                    padding-left: 10px;
+                }
+                
+                ul {
+                    list-style-type: circle;
+                }
+                
+                dl {
+                    padding: 0;
+                }
+                
+                dl dt {
+                    font-size: 1em;
+                    font-weight: bold;
+                    font-style: italic;
+                }
+                
+                dl dd {
+                    margin: 0 0 10px;
+                    padding: 0 10px;
+                }
+                
+                blockquote, q {
+                    border-left: 2px solid #009688;
+                    padding: 0 10px;
+                    color: #777;
+                    quotes: none;
+                    margin-left: 1em;
+                }
+                
+                blockquote::before, blockquote::after, q::before, q::after {
+                    content: none;
+                }
+                
+                h1, h2, h3, h4, h5, h6 {
+                    margin: 20px 0 10px;
+                    padding: 0;
+                    font-style: bold !important;
+                    color: #009688 !important;
+                    text-align: center !important;
+                    margin: 1.5em 5px !important;
+                    padding: 0.5em 1em !important;
+                }
+                
+                h1 {
+                    font-size: 24px !important;
+                    border-bottom: 1px solid #ddd !important;
+                }
+                
+                h2 {
+                    font-size: 20px !important;
+                    border-bottom: 1px solid #eee !important;
+                }
+                
+                h3 {
+                    font-size: 18px;
+                }
+                
+                h4 {
+                    font-size: 16px;
+                }
+                
+                
+                table {
+                    padding: 0;
+                    border-collapse: collapse;
+                    border-spacing: 0;
+                    font-size: 1em;
+                    font: inherit;
+                    border: 0;
+                    margin: 0 auto;
+                }
+                
+                tbody {
+                    margin: 0;
+                    padding: 0;
+                    border: 0;
+                }
+                
+                table tr {
+                    border: 0;
+                    border-top: 1px solid #CCC;
+                    background-color: white;
+                    margin: 0;
+                    padding: 0;
+                }
+                
+                table tr:nth-child(2n) {
+                    background-color: #F8F8F8;
+                }
+                
+                table tr th, table tr td {
+                    font-size: 16px;
+                    border: 1px solid #CCC;
+                    margin: 0;
+                    padding: 5px 10px;
+                }
+                
+                table tr th {
+                    font-weight: bold;
+                    color: #eee;
+                    border: 1px solid #009688;
+                    background-color: #009688;
                 }
             `;
             document.head.appendChild(styleSheet);
