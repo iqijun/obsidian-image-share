@@ -14,7 +14,7 @@ If your plugin does not need CSS, delete this file.
 
 .image-share-modal .resizable-container {
     position: relative;
-    width: 680px;
+    width: 100%;
     background: var(--background-primary);
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -41,6 +41,7 @@ If your plugin does not need CSS, delete this file.
 .image-share-modal .header {
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 16px;
     margin-bottom: 20px;
 }
@@ -53,6 +54,10 @@ If your plugin does not need CSS, delete this file.
     box-sizing: border-box;
     gap: 16px;
     position: relative;
+    width: 100%;
+    font-size: 16px;
+    line-height: 2;
+    letter-spacing: 0.05em;
 }
 
 .image-share-modal .canvas-container {
@@ -64,6 +69,7 @@ If your plugin does not need CSS, delete this file.
     border-radius: 8px;
     min-height: 200px;
     margin-bottom: 60px;
+    width: 100%;
 }
 
 .image-share-modal h2 {
@@ -72,12 +78,13 @@ If your plugin does not need CSS, delete this file.
     font-size: 1.2em;
     font-weight: 600;
     padding: 4px 0;
+    text-align: center;
 }
 
 .image-share-modal .download-button {
-    position: absolute;
-    bottom: 24px;
-    right: 24px;
+    position: fixed;
+    right: 30%;
+    bottom: 40%;
     background: var(--interactive-accent);
     border: none;
     border-radius: 50%;
@@ -95,7 +102,7 @@ If your plugin does not need CSS, delete this file.
 }
 
 .image-share-modal .download-button:hover {
-    transform: translateY(-2px);
+    transform: scale(1.1);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
@@ -113,6 +120,7 @@ If your plugin does not need CSS, delete this file.
 
 .image-share-modal .template-selector {
     display: flex;
+    justify-content: center;
     gap: 8px;
 }
 
@@ -136,4 +144,8 @@ If your plugin does not need CSS, delete this file.
 .image-share-modal .template-button.active {
     background: var(--interactive-accent);
     color: var(--text-on-accent);
+}
+
+.image-preview-container .markdown-preview-view {
+    padding: 24px;
 }

@@ -1,6 +1,5 @@
 import { App, Editor, Modal, Plugin, Menu, MarkdownRenderer, Component } from 'obsidian';
 import './styles.css';
-import './markdown-sspai.css';
 import html2canvas from 'html2canvas';
 
 
@@ -24,7 +23,7 @@ class ImageGenerator {
             tempDiv.className = 'markdown-preview-view markdown-rendered';
             tempDiv.style.position = 'absolute';
             tempDiv.style.left = '-9999px';
-            tempDiv.style.width = `${this.currentTemplate.width -5}px`;
+            tempDiv.style.width = `${this.currentTemplate.width}px`;
             tempDiv.style.background = this.currentTemplate.id === 'dark' ? '#2d3436' : '#f8f9fc';
             tempDiv.style.padding = '24px';
             tempDiv.style.boxSizing = 'border-box';
@@ -291,11 +290,6 @@ class ImageGenerator {
 class TextPreviewModal extends Modal {
     private text: string;
     private imageGenerator: ImageGenerator;
-    private isResizing: boolean = false;
-    private startX: number = 0;
-    private startY: number = 0;
-    private startWidth: number = 0;
-    private startHeight: number = 0;
 
     constructor(app: App, text: string) {
         super(app);
@@ -308,7 +302,8 @@ class TextPreviewModal extends Modal {
         contentEl.empty();
         contentEl.addClass('image-share-modal');
 
-        const previewContainer = contentEl.createDiv({ cls: 'image-preview-container' });
+        const resizableContainer = contentEl.createDiv({ cls: 'resizable-container' });
+        const previewContainer = resizableContainer.createDiv({ cls: 'image-preview-container' });
         
         // 创建顶部操作区
         const headerDiv = previewContainer.createDiv({ cls: 'header' });
@@ -316,6 +311,11 @@ class TextPreviewModal extends Modal {
         
         // 创建模板选择器
         const templateSelector = headerDiv.createDiv({ cls: 'template-selector' });
+
+        // 创建画布容器
+        const canvasContainer = previewContainer.createDiv({ cls: 'canvas-container' });
+
+        // 创建模板选择器
         SHARE_TEMPLATES.forEach(template => {
             const templateButton = templateSelector.createEl('button', {
                 cls: 'template-button',
@@ -335,9 +335,6 @@ class TextPreviewModal extends Modal {
             }
         });
 
-        // 创建画布容器
-        const canvasContainer = previewContainer.createDiv({ cls: 'canvas-container' });
-        
         // 等待初始画布渲染完成
         await this.imageGenerator.updateCanvas();
         canvasContainer.appendChild(this.imageGenerator.getCanvas());
@@ -379,13 +376,13 @@ const SHARE_TEMPLATES: ShareTemplate[] = [
     {
         id: 'default',
         name: '默认模板',
-        width: 600,
+        width: 800,
         render: async () => {}
     },
     {
         id: 'dark',
         name: '深色模板',
-        width: 600,
+        width: 800,
         render: async () => {}
     }
 ];
