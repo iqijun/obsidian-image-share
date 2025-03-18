@@ -59,10 +59,53 @@ class ImageGenerator {
             styleSheet.textContent = `
                 .markdown-here-wrapper {
                     font-size: 16px;
-                    line-height: 1.8em;
-                    letter-spacing: 0.1em;
+                    line-height: 2.0em; /* 增加行高 */
+                    letter-spacing: 0.12em; /* 增加字间距 */
                 }
                 
+                /* 增加段落间距和内边距 */
+                p {
+                    margin: 1.8em 5px !important;
+                    padding: 0.2em 0;
+                }
+                
+                /* 优化列表项间距 */
+                li {
+                    margin: 12px 0;
+                    line-height: 1.8em;
+                }
+                
+                /* 改善标题样式 */
+                h1, h2, h3, h4, h5, h6 {
+                    margin: 28px 0 18px !important;
+                    padding: 0.6em 1em !important;
+                    line-height: 1.5em;
+                }
+                
+                /* 优化引用块样式 */
+                blockquote, q {
+                    padding: 10px 15px;
+                    margin: 15px 0;
+                    line-height: 1.8em;
+                }
+                
+                /* 列表项内容间距 */
+                ul, ol {
+                    padding-left: 25px;
+                    margin: 15px 5px;
+                }
+                
+                /* 确保代码块不会挤压 */
+                pre {
+                    margin: 15px 0;
+                    padding: 12px;
+                    line-height: 1.5em;
+                }
+                
+                /* 添加内容容器的整体间距 */
+                .markdown-preview-sizer {
+                    padding: 10px 5px;
+                }
                 
                 pre, code {
                     font-size: 14px;
@@ -239,22 +282,28 @@ class ImageGenerator {
             const minHeight = 200;
             const finalHeight = Math.max(actualHeight, minHeight);
 
-            // 使用 html2canvas 渲染时使用计算出的高度
+            // 增加像素密度和图像质量
             const renderedCanvas = await html2canvas(tempDiv, {
                 width: this.currentTemplate.width,
                 height: finalHeight,
                 backgroundColor: this.currentTemplate.id === 'dark' ? '#2d3436' : '#e8ecf9',
-                scale: 2,
+                scale: 3, // 增加到3提高清晰度
                 windowWidth: this.currentTemplate.width,
                 windowHeight: finalHeight,
-                logging: true,
+                logging: false, // 减少日志输出
                 useCORS: true,
+                imageTimeout: 0, // 防止图像加载超时
+                allowTaint: true, // 允许跨域图像
                 onclone: (clonedDoc) => {
                     const clonedDiv = clonedDoc.querySelector('.markdown-preview-view') as HTMLElement;
                     if (clonedDiv) {
                         clonedDiv.style.width = `${this.currentTemplate.width - 40}px`;
                         clonedDiv.style.height = `${finalHeight}px`;
                         clonedDiv.style.overflow = 'visible';
+                        // 增加文本渲染清晰度
+                        clonedDiv.style.textRendering = 'optimizeLegibility';
+                        clonedDiv.style['webkitFontSmoothing' as any] = 'antialiased';
+                        clonedDiv.style['mozOsxFontSmoothing' as any] = 'grayscale';
                     }
                 }
             });
@@ -275,15 +324,31 @@ class ImageGenerator {
     }
 
     public getDataURL(): string {
-        return this.canvas.toDataURL('image/png');
+        // 增加输出质量，使用PNG格式以保持最佳质量
+        return this.canvas.toDataURL('image/png', 1.0);
     }
-
+    public async downloadAsImage() {
+          // 获取当前活动文件的名称
+          const activeFile = this.app.workspace.getActiveFile();
+          const fileName = activeFile ? activeFile.basename : 'share-image';
+          
+        const dataURL = this.getDataURL();
+        const a = document.createElement('a');
+        a.href = dataURL;
+        a.download = `${fileName}.png`;
+        a.click();
+    }
     public async setTemplate(templateId: string) {
         const template = SHARE_TEMPLATES.find(t => t.id === templateId);
         if (template) {
             this.currentTemplate = template;
             await this.updateCanvas();
         }
+    }
+    
+    // 添加获取当前模板的方法
+    public getCurrentTemplate(): ShareTemplate {
+        return this.currentTemplate;
     }
 }
 
@@ -302,7 +367,13 @@ class TextPreviewModal extends Modal {
         contentEl.empty();
         contentEl.addClass('image-share-modal');
 
+        // 根据当前模板宽度设置弹出框宽度，加上一些边距
+        const modalPadding = 48; // 左右各24px的内边距
+        const initialWidth = this.imageGenerator.getCurrentTemplate().width + modalPadding;
+        contentEl.style.width = `${initialWidth}px`;
+
         const resizableContainer = contentEl.createDiv({ cls: 'resizable-container' });
+        
         const previewContainer = resizableContainer.createDiv({ cls: 'image-preview-container' });
         
         // 创建顶部操作区
@@ -314,7 +385,7 @@ class TextPreviewModal extends Modal {
 
         // 创建画布容器
         const canvasContainer = previewContainer.createDiv({ cls: 'canvas-container' });
-
+        
         // 创建模板选择器
         SHARE_TEMPLATES.forEach(template => {
             const templateButton = templateSelector.createEl('button', {
@@ -329,32 +400,109 @@ class TextPreviewModal extends Modal {
                 await this.imageGenerator.setTemplate(template.id);
                 canvasContainer.empty();
                 canvasContainer.appendChild(this.imageGenerator.getCanvas());
+                
+                // 当模板变更时更新弹出框宽度
+                const modalPadding = 48; // 与初始化时相同的边距
+                const newWidth = this.imageGenerator.getCurrentTemplate().width + modalPadding;
+                contentEl.style.width = `${newWidth}px`;
             };
             if (template.id === 'default') {
                 templateButton.addClass('active');
             }
         });
 
+         // 添加缩放控制
+        const zoomControls = previewContainer.createDiv({ cls: 'zoom-controls' });
+            
+        const zoomOutBtn = zoomControls.createEl('button', {
+            cls: 'zoom-button zoom-out',
+            attr: { 'aria-label': '缩小预览' }
+        });
+        zoomOutBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>';
+
+        const zoomText = zoomControls.createEl('span', {
+            cls: 'zoom-text',
+            text: '100%'
+        });
+
+        const zoomInBtn = zoomControls.createEl('button', {
+            cls: 'zoom-button zoom-in',
+            attr: { 'aria-label': '放大预览' }
+        });
+        zoomInBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>';
+
+        // 缩放逻辑
+        let zoomLevel = 100;
+
+        zoomOutBtn.addEventListener('click', () => {
+            if (zoomLevel > 50) {
+                zoomLevel -= 10;
+                updateZoom();
+            }
+        });
+
+        zoomInBtn.addEventListener('click', () => {
+            if (zoomLevel < 200) {
+                zoomLevel += 10;
+                updateZoom();
+            }
+        });
+
+        const updateZoom = () => {
+            const canvas = canvasContainer.querySelector('canvas');
+            if (canvas) {
+                canvas.style.width = `${zoomLevel}%`;
+                zoomText.textContent = `${zoomLevel}%`;
+            }
+        };
+
         // 等待初始画布渲染完成
         await this.imageGenerator.updateCanvas();
         canvasContainer.appendChild(this.imageGenerator.getCanvas());
 
-        // 添加下载按钮
-        const downloadButton = contentEl.createEl('button', {
-            cls: 'download-button',
-            attr: {'title': '下载图片'}
+        // 创建一个容器来包裹所有内容
+        // const contentContainer = this.contentEl.createDiv({
+        //     cls: 'text-preview-container'
+        // });
+        
+        // // 创建预览区域
+        // const previewContainer = contentContainer.createDiv({
+        //     cls: 'preview-container'
+        // });
+        
+        // // 将原有的预览内容放入预viewContainer
+        // this.imageGenerator.generatePreview(previewContainer);
+        
+        // // 创建底部按钮容器
+        const buttonContainer = resizableContainer.createDiv({
+            cls: 'download-button'
         });
-        downloadButton.innerHTML = `<svg viewBox="0 0 24 24">
-            <path fill="currentColor" d="M12 15.5a.74.74 0 0 1-.53-.22l-3-3A.75.75 0 0 1 9.53 11L12 13.44L14.47 11a.75.75 0 0 1 1.06 1.06l-3 3a.74.74 0 0 1-.53.22zm0-7.5a.75.75 0 0 1 .75.75v6a.75.75 0 0 1-1.5 0v-6A.75.75 0 0 1 12 8z"/>
-            <path fill="currentColor" d="M19.5 20.5h-15a.75.75 0 0 1 0-1.5h15a.75.75 0 0 1 0 1.5z"/>
-        </svg>`;
+        
+        // 将下载按钮放入底部容器
+        const downloadButton = buttonContainer.createEl('button', {
+            cls: 'elegant-download-button',
+            attr: { 'aria-label': '下载为图片' }
+        });
 
-        downloadButton.onclick = () => {
-            const link = document.createElement('a');
-            link.download = 'share-image.png';
-            link.href = this.imageGenerator.getDataURL();
-            link.click();
-        };
+        // 使用SVG图标代替文本
+        downloadButton.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+        `;
+
+        downloadButton.addEventListener('click', async () => {
+            // 添加点击反馈效果
+            downloadButton.classList.add('clicked');
+            setTimeout(() => downloadButton.classList.remove('clicked'), 300);
+            
+            await this.imageGenerator.downloadAsImage();
+        });
+        
+        // // 添加样式
+        this.contentEl.addClass('text-preview-modal');
     }
 
     onClose() {
@@ -376,13 +524,13 @@ const SHARE_TEMPLATES: ShareTemplate[] = [
     {
         id: 'default',
         name: '默认模板',
-        width: 800,
+        width: 400,
         render: async () => {}
     },
     {
         id: 'dark',
         name: '深色模板',
-        width: 800,
+        width: 400,
         render: async () => {}
     }
 ];

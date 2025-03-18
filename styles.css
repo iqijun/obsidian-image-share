@@ -10,6 +10,9 @@ If your plugin does not need CSS, delete this file.
 .image-share-modal {
     max-width: none;
     max-height: none;
+    /* 移除固定宽度，以便通过JavaScript动态设置 */
+    /* width: 1000px; */
+    transition: width 0.3s ease;
 }
 
 .image-share-modal .resizable-container {
@@ -50,7 +53,7 @@ If your plugin does not need CSS, delete this file.
     height: 100%;
     display: flex;
     flex-direction: column;
-    padding: 20px 24px;
+    padding: 5px 5px;
     box-sizing: border-box;
     gap: 16px;
     position: relative;
@@ -64,12 +67,14 @@ If your plugin does not need CSS, delete this file.
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    padding: 16px;
+    padding: 2px;
     background: var(--background-secondary);
     border-radius: 8px;
     min-height: 200px;
     margin-bottom: 60px;
     width: 100%;
+    overflow: auto;
+    max-height: 70vh;
 }
 
 .image-share-modal h2 {
@@ -116,6 +121,10 @@ If your plugin does not need CSS, delete this file.
     height: auto;
     border-radius: 8px;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    transform: translateZ(0);
+    backface-visibility: hidden;
 }
 
 .image-share-modal .template-selector {
@@ -148,4 +157,109 @@ If your plugin does not need CSS, delete this file.
 
 .image-preview-container .markdown-preview-view {
     padding: 24px;
+}
+
+.text-preview-modal .text-preview-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.text-preview-modal .preview-container {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 16px;
+}
+
+.text-preview-modal .button-container {
+    display: flex;
+    justify-content: center;
+    padding: 8px 0;
+    border-top: 1px solid var(--background-modifier-border);
+}
+
+.text-preview-modal .button-container button {
+    padding: 8px 16px;
+}
+
+.elegant-download-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+.elegant-download-button:hover {
+    background-color: #f0f0f0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.elegant-download-button svg {
+    color: #4285f4;  /* 使用谷歌蓝或其他适合你应用的颜色 */
+}
+
+.elegant-download-button.clicked {
+    transform: scale(0.9);
+    background-color: #e8e8e8;
+}
+
+/* 在暗色模式下的样式调整 */
+.theme-dark .elegant-download-button {
+    background-color: rgba(50, 50, 50, 0.9);
+}
+
+.theme-dark .elegant-download-button:hover {
+    background-color: rgba(60, 60, 60, 0.9);
+}
+
+.theme-dark .elegant-download-button svg {
+    color: #8ab4f8;  /* 暗色模式下的蓝色 */
+}
+
+/* 添加缩放控制样式 */
+.image-share-modal .zoom-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.image-share-modal .zoom-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--interactive-accent);
+    background: transparent;
+    color: var(--interactive-accent);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.image-share-modal .zoom-button:hover {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+.image-share-modal .zoom-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-normal);
+    width: 50px;
+    text-align: center;
 }
