@@ -28,6 +28,10 @@ class ImageGenerator {
             tempDiv.style.padding = '24px';
             tempDiv.style.boxSizing = 'border-box';
             tempDiv.style.wordBreak = 'break-word';
+            // 添加文本换行处理，确保内容不会溢出
+            tempDiv.style.overflowWrap = 'break-word';
+            tempDiv.style.wordWrap = 'break-word';
+            tempDiv.style.hyphens = 'auto';
             // tempDiv.style.fontSize = '15px';
             // tempDiv.style.lineHeight = '1.5';
             // tempDiv.style.whiteSpace = 'pre-wrap';
@@ -287,7 +291,7 @@ class ImageGenerator {
                 width: this.currentTemplate.width,
                 height: finalHeight,
                 backgroundColor: this.currentTemplate.id === 'dark' ? '#2d3436' : '#e8ecf9',
-                scale: 3, // 增加到3提高清晰度
+                scale: window.devicePixelRatio * 2, // 根据设备像素比自动调整清晰度
                 windowWidth: this.currentTemplate.width,
                 windowHeight: finalHeight,
                 logging: false, // 减少日志输出
@@ -367,10 +371,39 @@ class TextPreviewModal extends Modal {
         contentEl.empty();
         contentEl.addClass('image-share-modal');
 
-        // 根据当前模板宽度设置弹出框宽度，加上一些边距
-        const modalPadding = 48; // 左右各24px的内边距
-        const initialWidth = this.imageGenerator.getCurrentTemplate().width + modalPadding;
-        contentEl.style.width = `${initialWidth}px`;
+        // 获取屏幕大小
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+        
+        // 创建一个调整模态框大小的函数
+        const adjustModalSize = (width: number, height: number, padding = 80) => {
+            // 计算内容尺寸（加上内边距）
+            const contentWidth = width + padding;
+            const contentHeight = height + padding + 150; // 额外添加150px用于控件和标题
+            
+            // 应用适当的限制
+            const maxWidth = Math.min(windowWidth * 0.6, 2000); // 最大宽度为窗口的90%或2000px
+            const maxHeight = Math.min(windowHeight * 0.9, 2000); // 最大高度为窗口的90%或2000px
+            
+            // 确保尺寸在合理范围内
+            const finalWidth = Math.min(Math.max(contentWidth, 500), maxWidth);
+            const finalHeight = Math.min(Math.max(contentHeight, 400), maxHeight);
+            
+            // 应用到模态框和父模态框
+            const modalElement = contentEl.parentElement as HTMLElement;
+            if (modalElement && modalElement.classList.contains('modal')) {
+                modalElement.style.width = `${finalWidth}px`;
+                modalElement.style.height = `${finalHeight}px`;
+            }
+            
+            // 也应用到当前元素以保持一致性
+            contentEl.style.width = `${finalWidth}px`;
+        };
+        
+        // 计算合适的初始模态框大小
+        const currentTemplate = this.imageGenerator.getCurrentTemplate();
+        // 初始设置 - 将在渲染完成后更新
+        adjustModalSize(currentTemplate.width, 600);
 
         const resizableContainer = contentEl.createDiv({ cls: 'resizable-container' });
         
@@ -399,12 +432,26 @@ class TextPreviewModal extends Modal {
                 templateButton.addClass('active');
                 await this.imageGenerator.setTemplate(template.id);
                 canvasContainer.empty();
-                canvasContainer.appendChild(this.imageGenerator.getCanvas());
+                const newCanvas = this.imageGenerator.getCanvas();
+                canvasContainer.appendChild(newCanvas);
                 
-                // 当模板变更时更新弹出框宽度
-                const modalPadding = 48; // 与初始化时相同的边距
-                const newWidth = this.imageGenerator.getCurrentTemplate().width + modalPadding;
-                contentEl.style.width = `${newWidth}px`;
+                // 当模板变更时更新弹出框尺寸
+                adjustModalSize(newCanvas.width, newCanvas.height);
+                
+                // 重新计算并应用适当的缩放比例
+                const newCanvasWidth = newCanvas.width;
+                const newContainerWidth = canvasContainer.clientWidth - 16; // 减去内边距
+                
+                if (newCanvasWidth > newContainerWidth) {
+                    // 计算新的缩放比例
+                    zoomLevel = Math.floor((newContainerWidth / newCanvasWidth * 100) / 10) * 10;
+                    zoomLevel = Math.max(50, zoomLevel);
+                    updateZoom(zoomLevel);
+                } else {
+                    // 如果画布适合容器，重置为100%
+                    zoomLevel = 100;
+                    updateZoom(zoomLevel);
+                }
             };
             if (template.id === 'default') {
                 templateButton.addClass('active');
@@ -432,33 +479,52 @@ class TextPreviewModal extends Modal {
         zoomInBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>';
 
         // 缩放逻辑
+        // 创建一个缩放更新函数
+        const updateZoom = (level: number) => {
+            const canvas = canvasContainer.querySelector('canvas');
+            if (canvas) {
+                canvas.style.width = `${level}%`;
+                zoomText.textContent = `${level}%`;
+            }
+        };
+
+        // 等待初始画布渲染完成
+        await this.imageGenerator.updateCanvas();
+        const canvas = this.imageGenerator.getCanvas();
+        canvasContainer.appendChild(canvas);
+        
+        // 更新模态框大小以适应画布
+        adjustModalSize(canvas.width, canvas.height);
+
+        // 自动计算初始缩放比例
         let zoomLevel = 100;
+        const canvasWidth = canvas.width;
+        const containerWidth = canvasContainer.clientWidth - 16; // 减去内边距
+        
+        // 如果画布宽度大于容器宽度，则自动适应
+        if (canvasWidth > containerWidth) {
+            // 计算适合的缩放比例，乘以100转为百分比，再向下取整到最接近的10
+            zoomLevel = Math.floor((containerWidth / canvasWidth * 100) / 10) * 10;
+            // 确保缩放比例不低于50%
+            zoomLevel = Math.max(50, zoomLevel);
+            
+            // 应用初始缩放
+            updateZoom(zoomLevel);
+        }
 
         zoomOutBtn.addEventListener('click', () => {
             if (zoomLevel > 50) {
                 zoomLevel -= 10;
-                updateZoom();
+                updateZoom(zoomLevel);
             }
         });
 
         zoomInBtn.addEventListener('click', () => {
             if (zoomLevel < 200) {
                 zoomLevel += 10;
-                updateZoom();
+                updateZoom(zoomLevel);
             }
         });
-
-        const updateZoom = () => {
-            const canvas = canvasContainer.querySelector('canvas');
-            if (canvas) {
-                canvas.style.width = `${zoomLevel}%`;
-                zoomText.textContent = `${zoomLevel}%`;
-            }
-        };
-
-        // 等待初始画布渲染完成
-        await this.imageGenerator.updateCanvas();
-        canvasContainer.appendChild(this.imageGenerator.getCanvas());
 
         // 创建一个容器来包裹所有内容
         // const contentContainer = this.contentEl.createDiv({
@@ -524,13 +590,13 @@ const SHARE_TEMPLATES: ShareTemplate[] = [
     {
         id: 'default',
         name: '默认模板',
-        width: 400,
+        width: 800,
         render: async () => {}
     },
     {
         id: 'dark',
         name: '深色模板',
-        width: 400,
+        width: 800,
         render: async () => {}
     }
 ];

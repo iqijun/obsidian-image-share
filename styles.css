@@ -6,13 +6,25 @@ available in the app when your plugin is enabled.
 If your plugin does not need CSS, delete this file.
 
 */
+.modal {
+    /* 移除固定宽高 */
+    /* width: 1500px; */
+    /* height: 300px; */
+    max-width: 90vw;      /* 限制最大宽度为视窗宽度的90% */
+    max-height: 90vh;     /* 限制最大高度为视窗高度的90% */
+    display: flex;        /* 使用flex布局使内容居中 */
+    flex-direction: column;
+    min-width: 400px;     /* 设置最小宽度 */
+    transition: width 0.3s ease, height 0.3s ease;  /* 平滑过渡效果 */
+}
+
 
 .image-share-modal {
-    max-width: none;
-    max-height: none;
+    max-width: 2000px;
+    max-height: 2000px;
     /* 移除固定宽度，以便通过JavaScript动态设置 */
     /* width: 1000px; */
-    transition: width 0.3s ease;
+    transition: width 0.3s ease, height 0.3s ease;
 }
 
 .image-share-modal .resizable-container {
@@ -67,7 +79,7 @@ If your plugin does not need CSS, delete this file.
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    padding: 2px;
+    padding: 8px;
     background: var(--background-secondary);
     border-radius: 8px;
     min-height: 200px;
@@ -75,6 +87,9 @@ If your plugin does not need CSS, delete this file.
     width: 100%;
     overflow: auto;
     max-height: 70vh;
+    overflow-x: auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .image-share-modal h2 {
@@ -87,9 +102,9 @@ If your plugin does not need CSS, delete this file.
 }
 
 .image-share-modal .download-button {
-    position: fixed;
-    right: 30%;
-    bottom: 40%;
+    position: absolute;  /* 使用absolute而不是fixed */
+    right: 20px;         /* 距右边20px */
+    top: 20px;           /* 距上边20px */
     background: var(--interactive-accent);
     border: none;
     border-radius: 50%;
@@ -125,6 +140,9 @@ If your plugin does not need CSS, delete this file.
     image-rendering: crisp-edges;
     transform: translateZ(0);
     backface-visibility: hidden;
+    min-width: auto;
+    min-height: auto;
+    object-fit: contain;
 }
 
 .image-share-modal .template-selector {
