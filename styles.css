@@ -16,6 +16,8 @@ If your plugin does not need CSS, delete this file.
     flex-direction: column;
     min-width: 400px;     /* 设置最小宽度 */
     transition: width 0.3s ease, height 0.3s ease;  /* 平滑过渡效果 */
+    background-color: #121212;
+    border-radius: 0;
 }
 
 
@@ -25,15 +27,106 @@ If your plugin does not need CSS, delete this file.
     /* 移除固定宽度，以便通过JavaScript动态设置 */
     /* width: 1000px; */
     transition: width 0.3s ease, height 0.3s ease;
+    animation: modal-in 0.3s ease;
+    background-color: #121212;
+    border: none;
+    border-radius: 0;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
 .image-share-modal .resizable-container {
     position: relative;
     width: 100%;
-    background: var(--background-primary);
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    height: 100%;
+    background: #121212;
+    border-radius: 0;
+    box-shadow: none;
     overflow: hidden;
+    transition: box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: row;
+    border: none;
+}
+
+.theme-dark .image-share-modal .resizable-container {
+    box-shadow: none;
+}
+
+/* 左侧控制面板样式 */
+.image-share-modal .controls-panel {
+    min-width: 280px;
+    width: 280px;
+    padding: 0;
+    border-right: 1px solid var(--background-modifier-border);
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    background: #181818;
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: 100%;
+    max-height: 100%;
+    color: #e0e0e0;
+}
+
+.image-share-modal .controls-panel h2 {
+    background-color: #181818;
+    margin: 0;
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+    color: #ffffff;
+    font-size: 1.2em;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+}
+
+.image-share-modal .flex-spacer {
+    flex-grow: 1;
+    min-height: 20px;
+}
+
+.image-share-modal .control-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.image-share-modal .control-section:last-child {
+    border-bottom: none;
+    padding-bottom: 20px;
+}
+
+.image-share-modal .download-section {
+    margin-top: 0;
+}
+
+/* 右侧预览区域样式 */
+.image-share-modal .preview-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
+    background-color: #121212;
+    position: relative;
+    height: 100%;
+}
+
+.image-share-modal .preview-panel h2 {
+    margin: 0;
+    padding: 20px;
+    color: #ffffff;
+    font-size: 1.2em;
+    font-weight: 500;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    background-color: #121212;
+    z-index: 5;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .image-share-modal .resize-handle {
@@ -58,14 +151,15 @@ If your plugin does not need CSS, delete this file.
     flex-direction: column;
     align-items: center;
     gap: 16px;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--background-modifier-border);
 }
 
 .image-share-modal .image-preview-container {
     height: 100%;
     display: flex;
     flex-direction: column;
-    padding: 5px 5px;
     box-sizing: border-box;
     gap: 16px;
     position: relative;
@@ -79,98 +173,94 @@ If your plugin does not need CSS, delete this file.
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    padding: 8px;
-    background: var(--background-secondary);
-    border-radius: 8px;
+    padding: 20px;
+    background: #121212;
+    border-radius: 0;
     min-height: 200px;
-    margin-bottom: 60px;
     width: 100%;
-    overflow: auto;
-    max-height: 70vh;
+    flex: 1;
     overflow-x: auto;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    transition: background-color 0.3s ease;
 }
 
 .image-share-modal h2 {
-    margin: 0;
+    margin: 0 0 16px 0;
     color: var(--text-normal);
-    font-size: 1.2em;
+    font-size: 1.4em;
     font-weight: 600;
     padding: 4px 0;
     text-align: center;
+    letter-spacing: 0.02em;
 }
 
-.image-share-modal .download-button {
-    position: absolute;  /* 使用absolute而不是fixed */
-    right: 20px;         /* 距右边20px */
-    top: 20px;           /* 距上边20px */
-    background: var(--interactive-accent);
-    border: none;
-    border-radius: 50%;
-    width: 48px;
-    height: 48px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    padding: 12px;
-    color: var(--text-on-accent);
-    z-index: 100;
+.image-share-modal .section-title {
+    font-size: 1em;
+    font-weight: 500;
+    margin: 0 0 8px 0;
+    color: #aaaaaa;
+    opacity: 0.9;
 }
 
-.image-share-modal .download-button:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-}
-
-.image-share-modal .download-button svg {
-    width: 24px;
-    height: 24px;
-}
 
 .image-share-modal canvas {
-    max-width: 100%;
     height: auto;
-    border-radius: 8px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    border-radius: 0;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
     image-rendering: -webkit-optimize-contrast;
     image-rendering: crisp-edges;
     transform: translateZ(0);
     backface-visibility: hidden;
     min-width: auto;
     min-height: auto;
-    object-fit: contain;
+    transition: width 0.3s ease, height 0.3s ease;
+    transform-origin: top left;
 }
 
 .image-share-modal .template-selector {
     display: flex;
-    justify-content: center;
-    gap: 8px;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
 }
 
 .image-share-modal .template-button {
-    padding: 8px 16px;
-    border: 1px solid var(--interactive-accent);
-    border-radius: 6px;
-    background: transparent;
-    color: var(--interactive-accent);
+    padding: 12px 16px;
+    border: none;
+    border-radius: 8px;
+    background: #252525;
+    color: #e0e0e0;
     cursor: pointer;
     transition: all 0.2s ease;
     font-size: 14px;
     font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-align: left;
+}
+
+.image-share-modal .template-button svg {
+    min-width: 16px;
+    color: #aaaaaa;
 }
 
 .image-share-modal .template-button:hover {
-    background: var(--interactive-accent);
-    color: var(--text-on-accent);
+    background: #303030;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
 }
 
 .image-share-modal .template-button.active {
-    background: var(--interactive-accent);
-    color: var(--text-on-accent);
+    background: #7c5ef2;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(124, 94, 242, 0.4);
+}
+
+.image-share-modal .template-button.active svg {
+    color: #ffffff;
 }
 
 .image-preview-container .markdown-preview-view {
@@ -201,83 +291,238 @@ If your plugin does not need CSS, delete this file.
 }
 
 .elegant-download-button {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.9);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    height: 48px;
+    border-radius: 8px;
+    background-color: #7c5ef2;
+    box-shadow: 0 4px 12px rgba(124, 94, 242, 0.3);
     border: none;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     z-index: 10;
+    gap: 8px;
+    color: #ffffff;
+    font-weight: 500;
 }
 
 .elegant-download-button:hover {
-    background-color: #f0f0f0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background-color: #8f74f3;
+    box-shadow: 0 6px 16px rgba(124, 94, 242, 0.4);
     transform: translateY(-2px);
 }
 
 .elegant-download-button svg {
-    color: #4285f4;  /* 使用谷歌蓝或其他适合你应用的颜色 */
+    color: #ffffff;
+    width: 20px;
+    height: 20px;
 }
 
 .elegant-download-button.clicked {
-    transform: scale(0.9);
-    background-color: #e8e8e8;
+    transform: scale(0.98);
+    box-shadow: 0 2px 8px rgba(124, 94, 242, 0.2);
 }
 
 /* 在暗色模式下的样式调整 */
 .theme-dark .elegant-download-button {
-    background-color: rgba(50, 50, 50, 0.9);
+    background-color: var(--interactive-accent);
 }
 
 .theme-dark .elegant-download-button:hover {
-    background-color: rgba(60, 60, 60, 0.9);
+    background-color: var(--interactive-accent-hover);
 }
 
 .theme-dark .elegant-download-button svg {
-    color: #8ab4f8;  /* 暗色模式下的蓝色 */
+    color: var(--text-on-accent);
 }
 
 /* 添加缩放控制样式 */
 .image-share-modal .zoom-controls {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 10px;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 0;
+    padding: 12px 16px;
+    background: #252525;
+    border-radius: 8px;
+    width: 100%;
 }
 
 .image-share-modal .zoom-button {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
-    border: 1px solid var(--interactive-accent);
-    background: transparent;
-    color: var(--interactive-accent);
+    border: none;
+    background: #181818;
+    color: #aaaaaa;
     cursor: pointer;
     transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .image-share-modal .zoom-button:hover {
-    background: var(--interactive-accent);
-    color: var(--text-on-accent);
+    background: #7c5ef2;
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
 }
 
 .image-share-modal .zoom-text {
     font-size: 14px;
-    font-weight: 500;
-    color: var(--text-normal);
+    font-weight: 600;
+    color: #e0e0e0;
     width: 50px;
     text-align: center;
+    user-select: none;
+}
+
+/* 下载提示样式 */
+.download-toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 20px;
+    background-color: #252525;
+    color: #e0e0e0;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    animation: toast-in 0.3s ease forwards;
+}
+
+.download-toast svg {
+    width: 20px;
+    height: 20px;
+    color: #7c5ef2;
+}
+
+.download-toast span {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.download-toast.hide {
+    animation: toast-out 0.3s ease forwards;
+}
+
+@keyframes toast-in {
+    from {
+        transform: translate(-50%, 20px);
+        opacity: 0;
+    }
+    to {
+        transform: translate(-50%, 0);
+        opacity: 1;
+    }
+}
+
+@keyframes toast-out {
+    from {
+        transform: translate(-50%, 0);
+        opacity: 1;
+    }
+    to {
+        transform: translate(-50%, 20px);
+        opacity: 0;
+    }
+}
+
+/* 暗色主题容器样式调整 */
+.theme-dark .image-share-modal .canvas-container {
+    background: #121212;
+    box-shadow: none;
+}
+
+/* 添加模态框过渡动画 */
+@keyframes modal-in {
+    from {
+        opacity: 0;
+        transform: scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.theme-dark .image-share-modal .preview-panel {
+    background-color: #121212;
+}
+
+.image-share-modal .buttons-container {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+}
+
+/* 垂直按钮容器 */
+.image-share-modal .buttons-container.vertical {
+    flex-direction: column;
+    gap: 16px;
+}
+
+.elegant-button {
+    flex: 1;
+    height: 48px;
+    border-radius: 8px;
+    background-color: #7c5ef2;
+    box-shadow: 0 4px 12px rgba(124, 94, 242, 0.3);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    z-index: 10;
+    gap: 8px;
+    color: #ffffff;
+    font-weight: 500;
+}
+
+.elegant-button:hover {
+    background-color: #8f74f3;
+    box-shadow: 0 6px 16px rgba(124, 94, 242, 0.4);
+    transform: translateY(-2px);
+}
+
+.elegant-button svg {
+    color: #ffffff;
+    width: 20px;
+    height: 20px;
+}
+
+.elegant-button.clicked {
+    transform: scale(0.98);
+    box-shadow: 0 2px 8px rgba(124, 94, 242, 0.2);
+}
+
+/* 复制按钮特殊样式 */
+.elegant-button.copy-button {
+    background-color: #2d9e6d;
+    box-shadow: 0 4px 12px rgba(45, 158, 109, 0.3);
+}
+
+.elegant-button.copy-button:hover {
+    background-color: #33b97e;
+    box-shadow: 0 6px 16px rgba(45, 158, 109, 0.4);
+}
+
+.elegant-button.copy-button.clicked {
+    box-shadow: 0 2px 8px rgba(45, 158, 109, 0.2);
+}
+
+/* 下载按钮特殊样式 */
+.elegant-button.download-button {
+    background-color: #7c5ef2;
+    box-shadow: 0 4px 12px rgba(124, 94, 242, 0.3);
 }

@@ -331,6 +331,7 @@ class ImageGenerator {
         // 增加输出质量，使用PNG格式以保持最佳质量
         return this.canvas.toDataURL('image/png', 1.0);
     }
+    
     public async downloadAsImage() {
           // 获取当前活动文件的名称
           const activeFile = this.app.workspace.getActiveFile();
@@ -342,6 +343,35 @@ class ImageGenerator {
         a.download = `${fileName}.png`;
         a.click();
     }
+    
+    public async copyToClipboard(): Promise<boolean> {
+        try {
+            // 创建一个临时的canvas元素以获取Blob对象
+            const canvas = this.canvas;
+            
+            // 将canvas转换为blob对象
+            const blob = await new Promise<Blob>((resolve, reject) => {
+                canvas.toBlob((b) => {
+                    if (b) {
+                        resolve(b);
+                    } else {
+                        reject(new Error('Failed to create blob from canvas'));
+                    }
+                }, 'image/png', 1.0);
+            });
+            
+            // 创建ClipboardItem对象
+            const data = [new ClipboardItem({ 'image/png': blob })];
+            
+            // 写入剪贴板
+            await navigator.clipboard.write(data);
+            return true;
+        } catch (error) {
+            console.error('复制到剪贴板失败:', error);
+            return false;
+        }
+    }
+    
     public async setTemplate(templateId: string) {
         const template = SHARE_TEMPLATES.find(t => t.id === templateId);
         if (template) {
@@ -377,27 +407,33 @@ class TextPreviewModal extends Modal {
         
         // 创建一个调整模态框大小的函数
         const adjustModalSize = (width: number, height: number, padding = 80) => {
-            // 计算内容尺寸（加上内边距）
-            const contentWidth = width + padding;
-            const contentHeight = height + padding + 150; // 额外添加150px用于控件和标题
+            // 计算内容尺寸（加上内边距和左侧控制面板的宽度）
+            const contentWidth = width + padding + 280; // 280px是左侧控制面板的宽度
+            const contentHeight = height + padding; 
             
             // 应用适当的限制
-            const maxWidth = Math.min(windowWidth * 0.6, 2000); // 最大宽度为窗口的90%或2000px
+            const maxWidth = Math.min(windowWidth * 0.9, 2000); // 最大宽度为窗口的90%或2000px
             const maxHeight = Math.min(windowHeight * 0.9, 2000); // 最大高度为窗口的90%或2000px
             
             // 确保尺寸在合理范围内
-            const finalWidth = Math.min(Math.max(contentWidth, 500), maxWidth);
-            const finalHeight = Math.min(Math.max(contentHeight, 400), maxHeight);
+            const finalWidth = Math.min(Math.max(contentWidth, 800), maxWidth);
+            const finalHeight = Math.min(Math.max(contentHeight, 600), maxHeight);
             
             // 应用到模态框和父模态框
             const modalElement = contentEl.parentElement as HTMLElement;
             if (modalElement && modalElement.classList.contains('modal')) {
                 modalElement.style.width = `${finalWidth}px`;
                 modalElement.style.height = `${finalHeight}px`;
+                // 确保模态框的高度是100%，让内容可以在各自区域内滚动
+                modalElement.style.display = 'flex';
+                modalElement.style.flexDirection = 'column';
             }
             
             // 也应用到当前元素以保持一致性
             contentEl.style.width = `${finalWidth}px`;
+            contentEl.style.height = `100%`;
+            contentEl.style.display = 'flex';
+            contentEl.style.flexDirection = 'column';
         };
         
         // 计算合适的初始模态框大小
@@ -407,65 +443,31 @@ class TextPreviewModal extends Modal {
 
         const resizableContainer = contentEl.createDiv({ cls: 'resizable-container' });
         
-        const previewContainer = resizableContainer.createDiv({ cls: 'image-preview-container' });
+        // 创建左侧控制面板
+        const controlsPanel = resizableContainer.createDiv({ cls: 'controls-panel' });
         
-        // 创建顶部操作区
-        const headerDiv = previewContainer.createDiv({ cls: 'header' });
-        headerDiv.createEl('h2', { text: '图片预览' });
+        // 创建控制面板标题
+        controlsPanel.createEl('h2', { text: '图片设置' });
         
-        // 创建模板选择器
-        const templateSelector = headerDiv.createDiv({ cls: 'template-selector' });
-
-        // 创建画布容器
-        const canvasContainer = previewContainer.createDiv({ cls: 'canvas-container' });
+        // 1. 创建主题选择区域
+        const themeSection = controlsPanel.createDiv({ cls: 'control-section' });
+        themeSection.createEl('div', { text: '选择主题', cls: 'section-title' });
         
         // 创建模板选择器
-        SHARE_TEMPLATES.forEach(template => {
-            const templateButton = templateSelector.createEl('button', {
-                cls: 'template-button',
-                text: template.name
-            });
-            templateButton.onclick = async () => {
-                templateSelector.findAll('.template-button').forEach(btn => 
-                    btn.removeClass('active')
-                );
-                templateButton.addClass('active');
-                await this.imageGenerator.setTemplate(template.id);
-                canvasContainer.empty();
-                const newCanvas = this.imageGenerator.getCanvas();
-                canvasContainer.appendChild(newCanvas);
-                
-                // 当模板变更时更新弹出框尺寸
-                adjustModalSize(newCanvas.width, newCanvas.height);
-                
-                // 重新计算并应用适当的缩放比例
-                const newCanvasWidth = newCanvas.width;
-                const newContainerWidth = canvasContainer.clientWidth - 16; // 减去内边距
-                
-                if (newCanvasWidth > newContainerWidth) {
-                    // 计算新的缩放比例
-                    zoomLevel = Math.floor((newContainerWidth / newCanvasWidth * 100) / 10) * 10;
-                    zoomLevel = Math.max(50, zoomLevel);
-                    updateZoom(zoomLevel);
-                } else {
-                    // 如果画布适合容器，重置为100%
-                    zoomLevel = 100;
-                    updateZoom(zoomLevel);
-                }
-            };
-            if (template.id === 'default') {
-                templateButton.addClass('active');
-            }
-        });
-
-         // 添加缩放控制
-        const zoomControls = previewContainer.createDiv({ cls: 'zoom-controls' });
-            
+        const templateSelector = themeSection.createDiv({ cls: 'template-selector' });
+        
+        // 2. 创建缩放控制区域
+        const zoomSection = controlsPanel.createDiv({ cls: 'control-section' });
+        zoomSection.createEl('div', { text: '调整大小', cls: 'section-title' });
+        
+        // 创建缩放控制
+        const zoomControls = zoomSection.createDiv({ cls: 'zoom-controls' });
+        
         const zoomOutBtn = zoomControls.createEl('button', {
             cls: 'zoom-button zoom-out',
             attr: { 'aria-label': '缩小预览' }
         });
-        zoomOutBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>';
+        zoomOutBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>';
 
         const zoomText = zoomControls.createEl('span', {
             cls: 'zoom-text',
@@ -476,18 +478,115 @@ class TextPreviewModal extends Modal {
             cls: 'zoom-button zoom-in',
             attr: { 'aria-label': '放大预览' }
         });
-        zoomInBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>';
+        zoomInBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>';
 
+        // 创建空间填充区域
+        controlsPanel.createDiv({ cls: 'flex-spacer' });
+
+        // 3. 创建下载按钮区域 - 总是在底部
+        const downloadSection = controlsPanel.createDiv({ cls: 'control-section download-section' });
+        downloadSection.createEl('div', { text: '导出图片', cls: 'section-title' });
+        
+        // 修改容器类名为垂直布局
+        const buttonsContainer = downloadSection.createDiv({ cls: 'buttons-container vertical' });
+        
+        // 创建下载按钮 - 放在前面
+        const downloadButton = buttonsContainer.createEl('button', {
+            cls: 'elegant-button download-button',
+            attr: { 'aria-label': '下载图片' }
+        });
+
+        // 使用更现代的SVG图标并添加文本
+        downloadButton.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span>下载图片</span>
+        `;
+
+        // 创建复制按钮 - 放在下载按钮后面
+        const copyButton = buttonsContainer.createEl('button', {
+            cls: 'elegant-button copy-button',
+            attr: { 'aria-label': '复制到剪贴板' }
+        });
+
+        // 使用更现代的SVG图标并添加文本
+        copyButton.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <span>复制图片</span>
+        `;
+        
+        // 创建右侧预览面板
+        const previewPanel = resizableContainer.createDiv({ cls: 'preview-panel' });
+        
+        // 创建预览面板标题
+        previewPanel.createEl('h2', { text: '图片预览' });
+        
+        // 创建画布容器
+        const canvasContainer = previewPanel.createDiv({ cls: 'canvas-container' });
+        
+        // 创建模板选择器
+        SHARE_TEMPLATES.forEach(template => {
+            const templateButton = templateSelector.createEl('button', {
+                cls: 'template-button',
+                text: template.name
+            });
+            
+            // 添加图标到模板按钮
+            if (template.id === 'default') {
+                templateButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg> ${template.name}`;
+            } else if (template.id === 'dark') {
+                templateButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg> ${template.name}`;
+            }
+            
+            templateButton.onclick = async () => {
+                templateSelector.findAll('.template-button').forEach(btn => 
+                    btn.removeClass('active')
+                );
+                templateButton.addClass('active');
+                
+                // 添加点击反馈动画
+                templateButton.animate([
+                    { transform: 'scale(0.95)' },
+                    { transform: 'scale(1)' }
+                ], {
+                    duration: 150,
+                    easing: 'ease-out'
+                });
+                
+                await this.imageGenerator.setTemplate(template.id);
+                canvasContainer.empty();
+                const newCanvas = this.imageGenerator.getCanvas();
+                canvasContainer.appendChild(newCanvas);
+                
+                // 当模板变更时更新弹出框尺寸
+                adjustModalSize(newCanvas.width, newCanvas.height);
+                
+                // 始终使用100%缩放
+                updateZoom(100);
+            };
+            if (template.id === 'default') {
+                templateButton.addClass('active');
+            }
+        });
+        
         // 缩放逻辑
-        // 创建一个缩放更新函数
         const updateZoom = (level: number) => {
             const canvas = canvasContainer.querySelector('canvas');
             if (canvas) {
-                canvas.style.width = `${level}%`;
+                // 设置实际宽度值而不是百分比，确保缩放效果生效
+                const originalWidth = canvas.width;
+                canvas.style.width = `${originalWidth * level / 100}px`;
+                canvas.style.maxWidth = 'none'; // 移除最大宽度限制以允许放大
                 zoomText.textContent = `${level}%`;
             }
         };
-
+        
         // 等待初始画布渲染完成
         await this.imageGenerator.updateCanvas();
         const canvas = this.imageGenerator.getCanvas();
@@ -496,26 +595,24 @@ class TextPreviewModal extends Modal {
         // 更新模态框大小以适应画布
         adjustModalSize(canvas.width, canvas.height);
 
-        // 自动计算初始缩放比例
+        // 设置默认缩放比例为100%
         let zoomLevel = 100;
-        const canvasWidth = canvas.width;
-        const containerWidth = canvasContainer.clientWidth - 16; // 减去内边距
-        
-        // 如果画布宽度大于容器宽度，则自动适应
-        if (canvasWidth > containerWidth) {
-            // 计算适合的缩放比例，乘以100转为百分比，再向下取整到最接近的10
-            zoomLevel = Math.floor((containerWidth / canvasWidth * 100) / 10) * 10;
-            // 确保缩放比例不低于50%
-            zoomLevel = Math.max(50, zoomLevel);
-            
-            // 应用初始缩放
-            updateZoom(zoomLevel);
-        }
+        updateZoom(zoomLevel);
 
+        // 添加缩放按钮事件和动画
         zoomOutBtn.addEventListener('click', () => {
             if (zoomLevel > 50) {
                 zoomLevel -= 10;
                 updateZoom(zoomLevel);
+                
+                // 添加点击动画
+                zoomOutBtn.animate([
+                    { transform: 'scale(0.9)' },
+                    { transform: 'scale(1)' }
+                ], {
+                    duration: 150,
+                    easing: 'ease-out'
+                });
             }
         });
 
@@ -523,51 +620,78 @@ class TextPreviewModal extends Modal {
             if (zoomLevel < 200) {
                 zoomLevel += 10;
                 updateZoom(zoomLevel);
+                
+                // 添加点击动画
+                zoomInBtn.animate([
+                    { transform: 'scale(0.9)' },
+                    { transform: 'scale(1)' }
+                ], {
+                    duration: 150,
+                    easing: 'ease-out'
+                });
             }
         });
 
-        // 创建一个容器来包裹所有内容
-        // const contentContainer = this.contentEl.createDiv({
-        //     cls: 'text-preview-container'
-        // });
-        
-        // // 创建预览区域
-        // const previewContainer = contentContainer.createDiv({
-        //     cls: 'preview-container'
-        // });
-        
-        // // 将原有的预览内容放入预viewContainer
-        // this.imageGenerator.generatePreview(previewContainer);
-        
-        // // 创建底部按钮容器
-        const buttonContainer = resizableContainer.createDiv({
-            cls: 'download-button'
-        });
-        
-        // 将下载按钮放入底部容器
-        const downloadButton = buttonContainer.createEl('button', {
-            cls: 'elegant-download-button',
-            attr: { 'aria-label': '下载为图片' }
-        });
-
-        // 使用SVG图标代替文本
-        downloadButton.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-            </svg>
-        `;
-
-        downloadButton.addEventListener('click', async () => {
-            // 添加点击反馈效果
-            downloadButton.classList.add('clicked');
-            setTimeout(() => downloadButton.classList.remove('clicked'), 300);
+        // 添加复制按钮点击事件
+        copyButton.addEventListener('click', async () => {
+            copyButton.classList.add('clicked');
             
-            await this.imageGenerator.downloadAsImage();
+            const success = await this.imageGenerator.copyToClipboard();
+            
+            const toast = document.createElement('div');
+            toast.className = 'download-toast';
+            toast.innerHTML = success 
+                ? `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                   <span>已复制到剪贴板</span>`
+                : `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff5555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                   <span>复制失败</span>`;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                copyButton.classList.remove('clicked');
+            }, 150);
+            
+            setTimeout(() => {
+                toast.classList.add('hide');
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 2000);
         });
         
-        // // 添加样式
+        // 添加下载按钮点击事件
+        downloadButton.addEventListener('click', () => {
+            downloadButton.classList.add('clicked');
+            
+            // 生成下载
+            const link = document.createElement('a');
+            link.download = `Obsidian-${new Date().toISOString().replace(/:/g, '-')}.png`;
+            link.href = this.imageGenerator.getDataURL();
+            link.click();
+            
+            const toast = document.createElement('div');
+            toast.className = 'download-toast';
+            toast.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>已开始下载</span>
+            `;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                downloadButton.classList.remove('clicked');
+            }, 150);
+            
+            setTimeout(() => {
+                toast.classList.add('hide');
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 2000);
+        });
+        
         this.contentEl.addClass('text-preview-modal');
     }
 
