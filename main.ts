@@ -596,7 +596,7 @@ class TextPreviewModal extends Modal {
         adjustModalSize(canvas.width, canvas.height);
 
         // 设置默认缩放比例为100%
-        let zoomLevel = 100;
+        let zoomLevel = 80;
         updateZoom(zoomLevel);
 
         // 添加缩放按钮事件和动画
