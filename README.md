@@ -1,3 +1,4 @@
+
 # Obsidian Image-share Plugin
 
 This image-sharing plugin for Obsidian (https://obsidian.md) allows you to share selected text as beautiful images.
@@ -10,6 +11,7 @@ v0.0.2
 
 v0.0.1
 - 初始化插件
+
 
 
 
