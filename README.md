@@ -1,8 +1,8 @@
-
-# obsidian-image-share# Obsidian Image-share Plugin
+# Obsidian Image-share Plugin
 
 This image-sharing plugin for Obsidian (https://obsidian.md) allows you to share selected text as beautiful images.
 
+![howtoUser](https://github.com/iqijun/obsidian-image-share/blob/master/howToUse/share%20image%E4%BD%BF%E7%94%A8.gif)
 
 v0.1.0
 修改预览样式
