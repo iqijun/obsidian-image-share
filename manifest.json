@@ -1,11 +1,11 @@
 {
-	"id": "Image-share",
+	"id": "image-share",
 	"name": "Image Share",
 	"version": "0.1.0",
 	"minAppVersion": "1.18.0",
 	"description": "Share selected text as beautiful images",
 	"author": "Shawn",
-	"authorUrl": "https://full-stacker.com",
-	"fundingUrl": "https://full-stacker.com",
+	"authorUrl": "https://github.com/iqijun",
+	"fundingUrl": "https://github.com/iqijun",
 	"isDesktopOnly": false
 }
