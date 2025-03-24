@@ -8,6 +8,7 @@ class ImageGenerator {
     private canvas: HTMLCanvasElement;
     private text: string;
     private currentTemplate: ShareTemplate;
+    private currentStyle = 'default'; // Removed type annotation
     private app: App;
 
     constructor(app: App, text: string) {
@@ -20,30 +21,17 @@ class ImageGenerator {
     public async updateCanvas() {
         try {
             const tempDiv = document.createElement('div');
-            tempDiv.className = 'markdown-preview-view markdown-rendered';
-            tempDiv.style.position = 'absolute';
-            tempDiv.style.left = '-9999px';
+            tempDiv.className = 'markdown-preview-view markdown-rendered temp-markdown-container';
+            tempDiv.classList.add(this.currentTemplate.id === 'dark' ? 'dark-theme' : 'light-theme');
+            // Add the markdown style classes
+            tempDiv.classList.add('markdown-style-base');
+            tempDiv.classList.add(`markdown-style-${this.currentStyle}`);
             tempDiv.style.width = `${this.currentTemplate.width}px`;
-            tempDiv.style.background = this.currentTemplate.id === 'dark' ? '#2d3436' : '#f8f9fc';
             tempDiv.style.padding = '24px';
-            tempDiv.style.boxSizing = 'border-box';
-            tempDiv.style.wordBreak = 'break-word';
-            // 添加文本换行处理，确保内容不会溢出
-            tempDiv.style.overflowWrap = 'break-word';
-            tempDiv.style.wordWrap = 'break-word';
-            tempDiv.style.hyphens = 'auto';
-            // tempDiv.style.fontSize = '15px';
-            // tempDiv.style.lineHeight = '1.5';
-            // tempDiv.style.whiteSpace = 'pre-wrap';
-            tempDiv.style.fontFamily = '"PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", "WenQuanYi Micro Hei", sans-serif';
-            tempDiv.style.color = this.currentTemplate.id === 'dark' ? '#e2e2e2' : '#2c3e50';
-            tempDiv.style.height = 'auto';
 
             // 添加日期
-            const dateDiv = tempDiv.createDiv({ cls: 'metadata-container' });
-            dateDiv.style.color = this.currentTemplate.id === 'dark' ? '#999999' : '#666666';
-            dateDiv.style.fontSize = '13px';
-            dateDiv.style.marginBottom = '20px';
+            const dateDiv = tempDiv.createDiv({ cls: 'metadata-container temp-date-metadata' });
+            dateDiv.classList.add(this.currentTemplate.id === 'dark' ? 'dark-theme' : 'light-theme');
             dateDiv.textContent = new Date().toLocaleDateString();
 
             // 添加内容容器
@@ -58,226 +46,7 @@ class ImageGenerator {
                 new Component()
             );
 
-            // 应用优化的样式
-            const styleSheet = document.createElement('style');
-            styleSheet.textContent = `
-                .markdown-here-wrapper {
-                    font-size: 16px;
-                    line-height: 2.0em; /* 增加行高 */
-                    letter-spacing: 0.12em; /* 增加字间距 */
-                }
-                
-                /* 增加段落间距和内边距 */
-                p {
-                    margin: 1.8em 5px !important;
-                    padding: 0.2em 0;
-                }
-                
-                /* 优化列表项间距 */
-                li {
-                    margin: 12px 0;
-                    line-height: 1.8em;
-                }
-                
-                /* 改善标题样式 */
-                h1, h2, h3, h4, h5, h6 {
-                    margin: 28px 0 18px !important;
-                    padding: 0.6em 1em !important;
-                    line-height: 1.5em;
-                }
-                
-                /* 优化引用块样式 */
-                blockquote, q {
-                    padding: 10px 15px;
-                    margin: 15px 0;
-                    line-height: 1.8em;
-                }
-                
-                /* 列表项内容间距 */
-                ul, ol {
-                    padding-left: 25px;
-                    margin: 15px 5px;
-                }
-                
-                /* 确保代码块不会挤压 */
-                pre {
-                    margin: 15px 0;
-                    padding: 12px;
-                    line-height: 1.5em;
-                }
-                
-                /* 添加内容容器的整体间距 */
-                .markdown-preview-sizer {
-                    padding: 10px 5px;
-                }
-                
-                pre, code {
-                    font-size: 14px;
-                    font-family: Roboto, 'Courier New', Consolas, Inconsolata, Courier, monospace;
-                    margin: auto 5px;
-                }
-                
-                code {
-                    white-space: pre-wrap;
-                    border-radius: 2px;
-                    display: inline;
-                }
-                
-                pre {
-                    font-size: 15px;
-                    line-height: 1.4em;
-                    display: block; !important;
-                }
-                
-                pre code {
-                    white-space: pre;
-                    overflow: auto;
-                    border-radius: 3px;
-                    padding: 1px 1px;
-                    display: block !important;
-                }
-                
-                strong, b{
-                    color: #BF360C;
-                }
-                
-                em, i {
-                    color: #009688;
-                }
-                
-                hr {
-                    border: 1px solid #BF360C;
-                    margin: 1.5em auto;
-                }
-                
-                p {
-                    margin: 1.5em 5px !important;
-                }
-                
-                table, pre, dl, blockquote, q, ul, ol {
-                    margin: 10px 5px;
-                }
-                
-                ul, ol {
-                    padding-left: 15px;
-                }
-                
-                li {
-                    margin: 10px;
-                }
-                
-                li p {
-                    margin: 10px 0 !important;
-                }
-                
-                ul ul, ul ol, ol ul, ol ol {
-                    margin: 0;
-                    padding-left: 10px;
-                }
-                
-                ul {
-                    list-style-type: circle;
-                }
-                
-                dl {
-                    padding: 0;
-                }
-                
-                dl dt {
-                    font-size: 1em;
-                    font-weight: bold;
-                    font-style: italic;
-                }
-                
-                dl dd {
-                    margin: 0 0 10px;
-                    padding: 0 10px;
-                }
-                
-                blockquote, q {
-                    border-left: 2px solid #009688;
-                    padding: 0 10px;
-                    color: #777;
-                    quotes: none;
-                    margin-left: 1em;
-                }
-                
-                blockquote::before, blockquote::after, q::before, q::after {
-                    content: none;
-                }
-                
-                h1, h2, h3, h4, h5, h6 {
-                    margin: 20px 0 10px;
-                    padding: 0;
-                    font-style: bold !important;
-                    color: #009688 !important;
-                    text-align: center !important;
-                    margin: 1.5em 5px !important;
-                    padding: 0.5em 1em !important;
-                }
-                
-                h1 {
-                    font-size: 24px !important;
-                    border-bottom: 1px solid #ddd !important;
-                }
-                
-                h2 {
-                    font-size: 20px !important;
-                    border-bottom: 1px solid #eee !important;
-                }
-                
-                h3 {
-                    font-size: 18px;
-                }
-                
-                h4 {
-                    font-size: 16px;
-                }
-                
-                
-                table {
-                    padding: 0;
-                    border-collapse: collapse;
-                    border-spacing: 0;
-                    font-size: 1em;
-                    font: inherit;
-                    border: 0;
-                    margin: 0 auto;
-                }
-                
-                tbody {
-                    margin: 0;
-                    padding: 0;
-                    border: 0;
-                }
-                
-                table tr {
-                    border: 0;
-                    border-top: 1px solid #CCC;
-                    background-color: white;
-                    margin: 0;
-                    padding: 0;
-                }
-                
-                table tr:nth-child(2n) {
-                    background-color: #F8F8F8;
-                }
-                
-                table tr th, table tr td {
-                    font-size: 16px;
-                    border: 1px solid #CCC;
-                    margin: 0;
-                    padding: 5px 10px;
-                }
-                
-                table tr th {
-                    font-weight: bold;
-                    color: #eee;
-                    border: 1px solid #009688;
-                    background-color: #009688;
-                }
-            `;
-            document.head.appendChild(styleSheet);
+            // We don't need the inline stylesheet anymore since we're using CSS classes
             document.body.appendChild(tempDiv);
             
             // 获取实际内容高度，包括内边距
@@ -303,11 +72,19 @@ class ImageGenerator {
                     if (clonedDiv) {
                         clonedDiv.style.width = `${this.currentTemplate.width - 40}px`;
                         clonedDiv.style.height = `${finalHeight}px`;
-                        clonedDiv.style.overflow = 'visible';
-                        // 增加文本渲染清晰度
-                        clonedDiv.style.textRendering = 'optimizeLegibility';
-                        clonedDiv.style['webkitFontSmoothing' as any] = 'antialiased';
-                        clonedDiv.style['mozOsxFontSmoothing' as any] = 'grayscale';
+                        clonedDiv.classList.add('enhanced-text-rendering');
+                        
+                        // Make sure the style classes are properly applied to the cloned document
+                        // This ensures the styling is preserved during the html2canvas conversion
+                        if (!clonedDiv.classList.contains('markdown-style-base')) {
+                            clonedDiv.classList.add('markdown-style-base');
+                        }
+                        
+                        // Add the specific style class if it's not already there
+                        const styleClass = `markdown-style-${this.currentStyle}`;
+                        if (!clonedDiv.classList.contains(styleClass)) {
+                            clonedDiv.classList.add(styleClass);
+                        }
                     }
                 }
             });
@@ -317,10 +94,20 @@ class ImageGenerator {
 
             // 清理临时元素
             document.body.removeChild(tempDiv);
-            document.head.removeChild(styleSheet);
         } catch (error) {
             console.error('Error rendering markdown:', error);
         }
+    }
+
+    // Add a method to set the style
+    public async setStyle(style: string) {
+        this.currentStyle = style;
+        await this.updateCanvas();
+    }
+
+    // Add a method to get the current style
+    public getCurrentStyle(): string {
+        return this.currentStyle;
     }
 
     public getCanvas(): HTMLCanvasElement {
@@ -402,39 +189,30 @@ class TextPreviewModal extends Modal {
         contentEl.addClass('image-share-modal');
 
         // 获取屏幕大小
-        const windowWidth = window.innerWidth;
-        const windowHeight = window.innerHeight;
+        // We no longer need these variables
+        // const windowWidth = window.innerWidth;
+        // const windowHeight = window.innerHeight;
         
         // 创建一个调整模态框大小的函数
-        const adjustModalSize = (width: number, height: number, padding = 80) => {
-            // 计算内容尺寸（加上内边距和左侧控制面板的宽度）
-            const contentWidth = width + padding + 280; // 280px是左侧控制面板的宽度
-            const contentHeight = height + padding; 
+        function adjustModalSize(width: number, height: number) {
+            const modalElement = contentEl.closest('.modal') as HTMLElement;
+            if (!modalElement) return;
             
-            // 应用适当的限制
-            const maxWidth = Math.min(windowWidth * 0.9, 2000); // 最大宽度为窗口的90%或2000px
-            const maxHeight = Math.min(windowHeight * 0.9, 2000); // 最大高度为窗口的90%或2000px
+            // 计算最终宽高，考虑屏幕尺寸限制
+            const maxWidth = window.innerWidth * 0.9;
+            const maxHeight = window.innerHeight * 0.9;
+            const finalWidth = Math.min(width + 300, maxWidth); // 300px 是左侧面板宽度
+            const finalHeight = Math.min(height + 80, maxHeight); // 添加额外的高度用于顶部和底部
             
-            // 确保尺寸在合理范围内
-            const finalWidth = Math.min(Math.max(contentWidth, 800), maxWidth);
-            const finalHeight = Math.min(Math.max(contentHeight, 600), maxHeight);
+            modalElement.style.width = `${finalWidth}px`;
+            modalElement.style.height = `${finalHeight}px`;
             
-            // 应用到模态框和父模态框
-            const modalElement = contentEl.parentElement as HTMLElement;
-            if (modalElement && modalElement.classList.contains('modal')) {
-                modalElement.style.width = `${finalWidth}px`;
-                modalElement.style.height = `${finalHeight}px`;
-                // 确保模态框的高度是100%，让内容可以在各自区域内滚动
-                modalElement.style.display = 'flex';
-                modalElement.style.flexDirection = 'column';
-            }
+            // 添加flex布局
+            modalElement.classList.add('modal-layout');
             
-            // 也应用到当前元素以保持一致性
-            contentEl.style.width = `${finalWidth}px`;
-            contentEl.style.height = `100%`;
-            contentEl.style.display = 'flex';
-            contentEl.style.flexDirection = 'column';
-        };
+            // 调整内容区域
+            contentEl.classList.add('modal-content-layout');
+        }
         
         // 计算合适的初始模态框大小
         const currentTemplate = this.imageGenerator.getCurrentTemplate();
@@ -467,7 +245,41 @@ class TextPreviewModal extends Modal {
             cls: 'zoom-button zoom-out',
             attr: { 'aria-label': '缩小预览' }
         });
-        zoomOutBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>';
+        
+        // Replace innerHTML with DOM API
+        const zoomOutIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        zoomOutIcon.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+        zoomOutIcon.setAttribute('width', '18');
+        zoomOutIcon.setAttribute('height', '18');
+        zoomOutIcon.setAttribute('viewBox', '0 0 24 24');
+        zoomOutIcon.setAttribute('fill', 'none');
+        zoomOutIcon.setAttribute('stroke', 'currentColor');
+        zoomOutIcon.setAttribute('stroke-width', '2');
+        zoomOutIcon.setAttribute('stroke-linecap', 'round');
+        zoomOutIcon.setAttribute('stroke-linejoin', 'round');
+        zoomOutIcon.classList.add('zoom-out-icon');
+        
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', '11');
+        circle.setAttribute('cy', '11');
+        circle.setAttribute('r', '8');
+        
+        const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line1.setAttribute('x1', '21');
+        line1.setAttribute('y1', '21');
+        line1.setAttribute('x2', '16.65');
+        line1.setAttribute('y2', '16.65');
+        
+        const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line2.setAttribute('x1', '8');
+        line2.setAttribute('y1', '11');
+        line2.setAttribute('x2', '14');
+        line2.setAttribute('y2', '11');
+        
+        zoomOutIcon.appendChild(circle);
+        zoomOutIcon.appendChild(line1);
+        zoomOutIcon.appendChild(line2);
+        zoomOutBtn.appendChild(zoomOutIcon);
 
         const zoomText = zoomControls.createEl('span', {
             cls: 'zoom-text',
@@ -478,7 +290,49 @@ class TextPreviewModal extends Modal {
             cls: 'zoom-button zoom-in',
             attr: { 'aria-label': '放大预览' }
         });
-        zoomInBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>';
+        
+        // Replace innerHTML with DOM API
+        const zoomInIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        zoomInIcon.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+        zoomInIcon.setAttribute('width', '18');
+        zoomInIcon.setAttribute('height', '18');
+        zoomInIcon.setAttribute('viewBox', '0 0 24 24');
+        zoomInIcon.setAttribute('fill', 'none');
+        zoomInIcon.setAttribute('stroke', 'currentColor');
+        zoomInIcon.setAttribute('stroke-width', '2');
+        zoomInIcon.setAttribute('stroke-linecap', 'round');
+        zoomInIcon.setAttribute('stroke-linejoin', 'round');
+        zoomInIcon.classList.add('zoom-in-icon');
+        
+        const circleIn = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circleIn.setAttribute('cx', '11');
+        circleIn.setAttribute('cy', '11');
+        circleIn.setAttribute('r', '8');
+        
+        const line3 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line3.setAttribute('x1', '21');
+        line3.setAttribute('y1', '21');
+        line3.setAttribute('x2', '16.65');
+        line3.setAttribute('y2', '16.65');
+        
+        const line4 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line4.setAttribute('x1', '11');
+        line4.setAttribute('y1', '8');
+        line4.setAttribute('x2', '11');
+        line4.setAttribute('y2', '14');
+        
+        const line5 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line5.setAttribute('x1', '8');
+        line5.setAttribute('y1', '11');
+        line5.setAttribute('x2', '14');
+        line5.setAttribute('y2', '11');
+        
+        zoomInIcon.appendChild(circleIn);
+        zoomInIcon.appendChild(line3);
+        zoomInIcon.appendChild(line4);
+        zoomInIcon.appendChild(line5);
+        
+        zoomInBtn.appendChild(zoomInIcon);
 
         // 创建空间填充区域
         controlsPanel.createDiv({ cls: 'flex-spacer' });
@@ -493,33 +347,90 @@ class TextPreviewModal extends Modal {
         // 创建下载按钮 - 放在前面
         const downloadButton = buttonsContainer.createEl('button', {
             cls: 'elegant-button download-button',
-            attr: { 'aria-label': '下载图片' }
+            attr: { 'aria-label': '下载分享图片' }
         });
-
-        // 使用更现代的SVG图标并添加文本
-        downloadButton.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-            </svg>
-            <span>下载图片</span>
-        `;
+        
+        const downloadIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        downloadIcon.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+        downloadIcon.setAttribute('width', '18');
+        downloadIcon.setAttribute('height', '18');
+        downloadIcon.setAttribute('viewBox', '0 0 24 24');
+        downloadIcon.setAttribute('fill', 'none');
+        downloadIcon.setAttribute('stroke', 'currentColor');
+        downloadIcon.setAttribute('stroke-width', '2');
+        downloadIcon.setAttribute('stroke-linecap', 'round');
+        downloadIcon.setAttribute('stroke-linejoin', 'round');
+        downloadIcon.classList.add('download-icon');
+        
+        const path1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path1.setAttribute('d', 'M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4');
+        
+        const line6 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line6.setAttribute('x1', '7');
+        line6.setAttribute('y1', '10');
+        line6.setAttribute('x2', '12');
+        line6.setAttribute('y2', '15');
+        
+        const line7 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line7.setAttribute('x1', '17');
+        line7.setAttribute('y1', '10');
+        line7.setAttribute('x2', '12');
+        line7.setAttribute('y2', '15');
+        
+        const line8 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line8.setAttribute('x1', '12');
+        line8.setAttribute('y1', '15');
+        line8.setAttribute('x2', '12');
+        line8.setAttribute('y2', '3');
+        
+        downloadIcon.appendChild(path1);
+        downloadIcon.appendChild(line6);
+        downloadIcon.appendChild(line7);
+        downloadIcon.appendChild(line8);
+        
+        downloadButton.appendChild(downloadIcon);
+        
+        const downloadText = document.createElement('span');
+        downloadText.textContent = '下载图片';
+        downloadButton.appendChild(downloadText);
 
         // 创建复制按钮 - 放在下载按钮后面
         const copyButton = buttonsContainer.createEl('button', {
             cls: 'elegant-button copy-button',
-            attr: { 'aria-label': '复制到剪贴板' }
+            attr: { 'aria-label': '复制图片到剪贴板' }
         });
-
-        // 使用更现代的SVG图标并添加文本
-        copyButton.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-            </svg>
-            <span>复制图片</span>
-        `;
+        
+        const copyIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        copyIcon.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+        copyIcon.setAttribute('width', '18');
+        copyIcon.setAttribute('height', '18');
+        copyIcon.setAttribute('viewBox', '0 0 24 24');
+        copyIcon.setAttribute('fill', 'none');
+        copyIcon.setAttribute('stroke', 'currentColor');
+        copyIcon.setAttribute('stroke-width', '2');
+        copyIcon.setAttribute('stroke-linecap', 'round');
+        copyIcon.setAttribute('stroke-linejoin', 'round');
+        copyIcon.classList.add('copy-icon');
+        
+        const rect1 = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect1.setAttribute('x', '9');
+        rect1.setAttribute('y', '9');
+        rect1.setAttribute('width', '13');
+        rect1.setAttribute('height', '13');
+        rect1.setAttribute('rx', '2');
+        rect1.setAttribute('ry', '2');
+        
+        const path2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path2.setAttribute('d', 'M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1');
+        
+        copyIcon.appendChild(rect1);
+        copyIcon.appendChild(path2);
+        
+        copyButton.appendChild(copyIcon);
+        
+        const copyText = document.createElement('span');
+        copyText.textContent = '复制到剪贴板';
+        copyButton.appendChild(copyText);
         
         // 创建右侧预览面板
         const previewPanel = resizableContainer.createDiv({ cls: 'preview-panel' });
@@ -538,11 +449,107 @@ class TextPreviewModal extends Modal {
             });
             
             // 添加图标到模板按钮
-            if (template.id === 'default') {
-                templateButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg> ${template.name}`;
-            } else if (template.id === 'dark') {
-                templateButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg> ${template.name}`;
+            if (template.id === 'light') {
+                const lightIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                lightIcon.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+                lightIcon.setAttribute('width', '16');
+                lightIcon.setAttribute('height', '16');
+                lightIcon.setAttribute('viewBox', '0 0 24 24');
+                lightIcon.setAttribute('fill', 'none');
+                lightIcon.setAttribute('stroke', 'currentColor');
+                lightIcon.setAttribute('stroke-width', '2');
+                lightIcon.setAttribute('stroke-linecap', 'round');
+                lightIcon.setAttribute('stroke-linejoin', 'round');
+                lightIcon.classList.add('light-template-icon');
+                
+                const circle2 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle2.setAttribute('cx', '12');
+                circle2.setAttribute('cy', '12');
+                circle2.setAttribute('r', '5');
+                
+                const line9 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line9.setAttribute('x1', '12');
+                line9.setAttribute('y1', '1');
+                line9.setAttribute('x2', '12');
+                line9.setAttribute('y2', '3');
+                
+                const line10 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line10.setAttribute('x1', '12');
+                line10.setAttribute('y1', '21');
+                line10.setAttribute('x2', '12');
+                line10.setAttribute('y2', '23');
+                
+                const line11 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line11.setAttribute('x1', '4.22');
+                line11.setAttribute('y1', '4.22');
+                line11.setAttribute('x2', '5.64');
+                line11.setAttribute('y2', '5.64');
+                
+                const line12 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line12.setAttribute('x1', '18.36');
+                line12.setAttribute('y1', '18.36');
+                line12.setAttribute('x2', '19.78');
+                line12.setAttribute('y2', '19.78');
+                
+                const line13 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line13.setAttribute('x1', '1');
+                line13.setAttribute('y1', '12');
+                line13.setAttribute('x2', '3');
+                line13.setAttribute('y2', '12');
+                
+                const line14 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line14.setAttribute('x1', '21');
+                line14.setAttribute('y1', '12');
+                line14.setAttribute('x2', '23');
+                line14.setAttribute('y2', '12');
+                
+                const line15 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line15.setAttribute('x1', '4.22');
+                line15.setAttribute('y1', '19.78');
+                line15.setAttribute('x2', '5.64');
+                line15.setAttribute('y2', '18.36');
+                
+                const line16 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line16.setAttribute('x1', '18.36');
+                line16.setAttribute('y1', '5.64');
+                line16.setAttribute('x2', '19.78');
+                line16.setAttribute('y2', '4.22');
+                
+                lightIcon.appendChild(circle2);
+                lightIcon.appendChild(line9);
+                lightIcon.appendChild(line10);
+                lightIcon.appendChild(line11);
+                lightIcon.appendChild(line12);
+                lightIcon.appendChild(line13);
+                lightIcon.appendChild(line14);
+                lightIcon.appendChild(line15);
+                lightIcon.appendChild(line16);
+                
+                templateButton.appendChild(lightIcon);
+            } else {
+                const darkIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                darkIcon.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+                darkIcon.setAttribute('width', '16');
+                darkIcon.setAttribute('height', '16');
+                darkIcon.setAttribute('viewBox', '0 0 24 24');
+                darkIcon.setAttribute('fill', 'none');
+                darkIcon.setAttribute('stroke', 'currentColor');
+                darkIcon.setAttribute('stroke-width', '2');
+                darkIcon.setAttribute('stroke-linecap', 'round');
+                darkIcon.setAttribute('stroke-linejoin', 'round');
+                darkIcon.classList.add('dark-template-icon');
+                
+                const path3 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path3.setAttribute('d', 'M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z');
+                
+                darkIcon.appendChild(path3);
+                
+                templateButton.appendChild(darkIcon);
             }
+            
+            const templateText = document.createElement('span');
+            templateText.textContent = template.name;
+            templateButton.appendChild(templateText);
             
             templateButton.onclick = async () => {
                 templateSelector.findAll('.template-button').forEach(btn => 
@@ -568,24 +575,94 @@ class TextPreviewModal extends Modal {
                 adjustModalSize(newCanvas.width, newCanvas.height);
                 
                 // 始终使用100%缩放
-                updateZoom(100);
+                adjustZoom(100);
             };
             if (template.id === 'default') {
                 templateButton.addClass('active');
             }
         });
         
-        // 缩放逻辑
-        const updateZoom = (level: number) => {
-            const canvas = canvasContainer.querySelector('canvas');
-            if (canvas) {
-                // 设置实际宽度值而不是百分比，确保缩放效果生效
-                const originalWidth = canvas.width;
-                canvas.style.width = `${originalWidth * level / 100}px`;
-                canvas.style.maxWidth = 'none'; // 移除最大宽度限制以允许放大
-                zoomText.textContent = `${level}%`;
+        // 创建样式选择区域
+        const styleSection = controlsPanel.createDiv({ cls: 'control-section' });
+        styleSection.createEl('div', { text: '选择样式', cls: 'section-title' });
+        
+        // 创建样式选择器
+        const styleSelector = styleSection.createDiv({ cls: 'style-selector' });
+        
+        // 添加样式选择按钮
+        MARKDOWN_STYLES.forEach(style => {
+            const styleButton = styleSelector.createEl('button', {
+                cls: 'style-button',
+                attr: { 'data-style': style.id }
+            });
+            
+            // 创建样式标题
+            const styleTitle = document.createElement('span');
+            styleTitle.textContent = style.name;
+            styleButton.appendChild(styleTitle);
+            
+            // 添加描述
+            const styleDesc = document.createElement('small');
+            styleDesc.textContent = style.description;
+            styleDesc.style.display = 'block';
+            styleDesc.style.fontSize = '12px';
+            styleDesc.style.opacity = '0.7';
+            styleDesc.style.marginTop = '4px';
+            styleButton.appendChild(styleDesc);
+            
+            // 设置当前活动样式
+            if (style.id === this.imageGenerator.getCurrentStyle()) {
+                styleButton.classList.add('active');
             }
-        };
+            
+            // 添加点击事件
+            styleButton.addEventListener('click', async () => {
+                // 移除所有活动状态
+                styleSelector.findAll('.style-button').forEach(btn => 
+                    btn.removeClass('active')
+                );
+                
+                // 设置当前按钮为活动状态
+                styleButton.addClass('active');
+                
+                // 添加动画效果
+                styleButton.animate([
+                    { transform: 'scale(0.95)' },
+                    { transform: 'scale(1)' }
+                ], {
+                    duration: 150,
+                    easing: 'ease-out'
+                });
+                
+                // 设置新样式并重新渲染
+                await this.imageGenerator.setStyle(style.id);
+                
+                // 更新画布
+                canvasContainer.empty();
+                const newCanvas = this.imageGenerator.getCanvas();
+                canvasContainer.appendChild(newCanvas);
+                
+                // 应用缩放
+                adjustZoom(zoomLevel);
+            });
+        });
+        
+        // 缩放逻辑
+        function adjustZoom(level: number) {
+            const canvas = canvasContainer.querySelector('canvas');
+            if (!canvas) return;
+            
+            // 设置实际宽度值而不是百分比，确保缩放效果生效
+            const originalWidth = canvas.width;
+            canvas.classList.add('canvas-preview');
+            canvas.style.width = `${originalWidth * level / 100}px`;
+            
+            // 更新缩放文本
+            zoomText.textContent = `${level}%`;
+            
+            // 保存当前缩放级别
+            zoomLevel = level;
+        }
         
         // 等待初始画布渲染完成
         await this.imageGenerator.updateCanvas();
@@ -597,13 +674,13 @@ class TextPreviewModal extends Modal {
 
         // 设置默认缩放比例为100%
         let zoomLevel = 80;
-        updateZoom(zoomLevel);
+        adjustZoom(zoomLevel);
 
         // 添加缩放按钮事件和动画
         zoomOutBtn.addEventListener('click', () => {
             if (zoomLevel > 50) {
                 zoomLevel -= 10;
-                updateZoom(zoomLevel);
+                adjustZoom(zoomLevel);
                 
                 // 添加点击动画
                 zoomOutBtn.animate([
@@ -619,7 +696,7 @@ class TextPreviewModal extends Modal {
         zoomInBtn.addEventListener('click', () => {
             if (zoomLevel < 200) {
                 zoomLevel += 10;
-                updateZoom(zoomLevel);
+                adjustZoom(zoomLevel);
                 
                 // 添加点击动画
                 zoomInBtn.animate([
@@ -638,26 +715,84 @@ class TextPreviewModal extends Modal {
             
             const success = await this.imageGenerator.copyToClipboard();
             
-            const toast = document.createElement('div');
-            toast.className = 'download-toast';
-            toast.innerHTML = success 
-                ? `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                   <span>已复制到剪贴板</span>`
-                : `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff5555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                   <span>复制失败</span>`;
-            
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                copyButton.classList.remove('clicked');
-            }, 150);
-            
-            setTimeout(() => {
-                toast.classList.add('hide');
+            const createToast = (success: boolean, message: string) => {
+                const toast = document.createElement('div');
+                toast.className = 'download-toast';
+                
+                // Create icon
+                if (success) {
+                    const successIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                    successIcon.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+                    successIcon.setAttribute('width', '24');
+                    successIcon.setAttribute('height', '24');
+                    successIcon.setAttribute('viewBox', '0 0 24 24');
+                    successIcon.setAttribute('fill', 'none');
+                    successIcon.setAttribute('stroke', 'currentColor');
+                    successIcon.setAttribute('stroke-width', '2');
+                    successIcon.setAttribute('stroke-linecap', 'round');
+                    successIcon.setAttribute('stroke-linejoin', 'round');
+                    
+                    const circle3 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circle3.setAttribute('cx', '12');
+                    circle3.setAttribute('cy', '12');
+                    circle3.setAttribute('r', '10');
+                    
+                    const path4 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    path4.setAttribute('d', 'M8 12l2 2 4-4');
+                    
+                    successIcon.appendChild(circle3);
+                    successIcon.appendChild(path4);
+                    toast.appendChild(successIcon);
+                } else {
+                    const errorIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                    errorIcon.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+                    errorIcon.setAttribute('width', '24');
+                    errorIcon.setAttribute('height', '24');
+                    errorIcon.setAttribute('viewBox', '0 0 24 24');
+                    errorIcon.setAttribute('fill', 'none');
+                    errorIcon.setAttribute('stroke', 'currentColor');
+                    errorIcon.setAttribute('stroke-width', '2');
+                    errorIcon.setAttribute('stroke-linecap', 'round');
+                    errorIcon.setAttribute('stroke-linejoin', 'round');
+                    
+                    const circle4 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circle4.setAttribute('cx', '12');
+                    circle4.setAttribute('cy', '12');
+                    circle4.setAttribute('r', '10');
+                    
+                    const line17 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line17.setAttribute('x1', '15');
+                    line17.setAttribute('y1', '9');
+                    line17.setAttribute('x2', '9');
+                    line17.setAttribute('y2', '15');
+                    
+                    const line18 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line18.setAttribute('x1', '9');
+                    line18.setAttribute('y1', '9');
+                    line18.setAttribute('x2', '15');
+                    line18.setAttribute('y2', '15');
+                    
+                    errorIcon.appendChild(circle4);
+                    errorIcon.appendChild(line17);
+                    errorIcon.appendChild(line18);
+                    toast.appendChild(errorIcon);
+                }
+                
+                const messageSpan = document.createElement('span');
+                messageSpan.textContent = message;
+                toast.appendChild(messageSpan);
+                
+                document.body.appendChild(toast);
+                
                 setTimeout(() => {
-                    document.body.removeChild(toast);
-                }, 300);
-            }, 2000);
+                    toast.classList.add('hide');
+                    setTimeout(() => {
+                        document.body.removeChild(toast);
+                    }, 300);
+                }, 3000);
+            };
+            
+            createToast(success, success ? '已复制到剪贴板' : '复制失败');
         });
         
         // 添加下载按钮点击事件
@@ -670,26 +805,84 @@ class TextPreviewModal extends Modal {
             link.href = this.imageGenerator.getDataURL();
             link.click();
             
-            const toast = document.createElement('div');
-            toast.className = 'download-toast';
-            toast.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-                <span>已开始下载</span>
-            `;
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                downloadButton.classList.remove('clicked');
-            }, 150);
-            
-            setTimeout(() => {
-                toast.classList.add('hide');
+            const createToast = (success: boolean, message: string) => {
+                const toast = document.createElement('div');
+                toast.className = 'download-toast';
+                
+                // Create icon
+                if (success) {
+                    const successIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                    successIcon.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+                    successIcon.setAttribute('width', '24');
+                    successIcon.setAttribute('height', '24');
+                    successIcon.setAttribute('viewBox', '0 0 24 24');
+                    successIcon.setAttribute('fill', 'none');
+                    successIcon.setAttribute('stroke', 'currentColor');
+                    successIcon.setAttribute('stroke-width', '2');
+                    successIcon.setAttribute('stroke-linecap', 'round');
+                    successIcon.setAttribute('stroke-linejoin', 'round');
+                    
+                    const circle5 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circle5.setAttribute('cx', '12');
+                    circle5.setAttribute('cy', '12');
+                    circle5.setAttribute('r', '10');
+                    
+                    const path5 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    path5.setAttribute('d', 'M8 12l2 2 4-4');
+                    
+                    successIcon.appendChild(circle5);
+                    successIcon.appendChild(path5);
+                    toast.appendChild(successIcon);
+                } else {
+                    const errorIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                    errorIcon.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+                    errorIcon.setAttribute('width', '24');
+                    errorIcon.setAttribute('height', '24');
+                    errorIcon.setAttribute('viewBox', '0 0 24 24');
+                    errorIcon.setAttribute('fill', 'none');
+                    errorIcon.setAttribute('stroke', 'currentColor');
+                    errorIcon.setAttribute('stroke-width', '2');
+                    errorIcon.setAttribute('stroke-linecap', 'round');
+                    errorIcon.setAttribute('stroke-linejoin', 'round');
+                    
+                    const circle6 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circle6.setAttribute('cx', '12');
+                    circle6.setAttribute('cy', '12');
+                    circle6.setAttribute('r', '10');
+                    
+                    const line19 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line19.setAttribute('x1', '15');
+                    line19.setAttribute('y1', '9');
+                    line19.setAttribute('x2', '9');
+                    line19.setAttribute('y2', '15');
+                    
+                    const line20 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line20.setAttribute('x1', '9');
+                    line20.setAttribute('y1', '9');
+                    line20.setAttribute('x2', '15');
+                    line20.setAttribute('y2', '15');
+                    
+                    errorIcon.appendChild(circle6);
+                    errorIcon.appendChild(line19);
+                    errorIcon.appendChild(line20);
+                    toast.appendChild(errorIcon);
+                }
+                
+                const messageSpan = document.createElement('span');
+                messageSpan.textContent = message;
+                toast.appendChild(messageSpan);
+                
+                document.body.appendChild(toast);
+                
                 setTimeout(() => {
-                    document.body.removeChild(toast);
-                }, 300);
-            }, 2000);
+                    toast.classList.add('hide');
+                    setTimeout(() => {
+                        document.body.removeChild(toast);
+                    }, 300);
+                }, 3000);
+            };
+            
+            createToast(true, '已开始下载');
         });
         
         this.contentEl.addClass('text-preview-modal');
@@ -722,6 +915,25 @@ const SHARE_TEMPLATES: ShareTemplate[] = [
         name: '深色模板',
         width: 800,
         render: async () => {}
+    }
+];
+
+// Define the available markdown styles
+const MARKDOWN_STYLES = [
+    {
+        id: 'default',
+        name: '默认样式',
+        description: '默认的高对比度样式，有彩色强调'
+    },
+    {
+        id: 'modern',
+        name: '现代样式',
+        description: '现代设计风格，蓝色和粉色强调'
+    },
+    {
+        id: 'minimal',
+        name: '极简样式',
+        description: '简约而优雅的黑白设计'
     }
 ];
 
