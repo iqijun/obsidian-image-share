@@ -21,13 +21,15 @@ class ImageGenerator {
     public async updateCanvas() {
         try {
             const tempDiv = document.createElement('div');
-            tempDiv.className = 'markdown-preview-view markdown-rendered temp-markdown-container';
+            tempDiv.className = 'markdown-preview-view markdown-rendered temp-markdown-container temp-container';
             tempDiv.classList.add(this.currentTemplate.id === 'dark' ? 'dark-theme' : 'light-theme');
             // Add the markdown style classes
             tempDiv.classList.add('markdown-style-base');
             tempDiv.classList.add(`markdown-style-${this.currentStyle}`);
-            tempDiv.style.width = `${this.currentTemplate.width}px`;
-            tempDiv.style.padding = '24px';
+            
+            // Set template width via CSS custom property
+            tempDiv.style.setProperty('--template-width', `${this.currentTemplate.width}px`);
+            tempDiv.classList.add('temp-div');
 
             // 添加日期
             const dateDiv = tempDiv.createDiv({ cls: 'metadata-container temp-date-metadata' });
@@ -46,7 +48,6 @@ class ImageGenerator {
                 new Component()
             );
 
-            // We don't need the inline stylesheet anymore since we're using CSS classes
             document.body.appendChild(tempDiv);
             
             // 获取实际内容高度，包括内边距
@@ -60,27 +61,28 @@ class ImageGenerator {
                 width: this.currentTemplate.width,
                 height: finalHeight,
                 backgroundColor: this.currentTemplate.id === 'dark' ? '#2d3436' : '#e8ecf9',
-                scale: window.devicePixelRatio * 2, // 根据设备像素比自动调整清晰度
+                scale: window.devicePixelRatio * 2,
                 windowWidth: this.currentTemplate.width,
                 windowHeight: finalHeight,
-                logging: false, // 减少日志输出
+                logging: false,
                 useCORS: true,
-                imageTimeout: 0, // 防止图像加载超时
-                allowTaint: true, // 允许跨域图像
+                imageTimeout: 0,
+                allowTaint: true,
                 onclone: (clonedDoc) => {
                     const clonedDiv = clonedDoc.querySelector('.markdown-preview-view') as HTMLElement;
                     if (clonedDiv) {
-                        clonedDiv.style.width = `${this.currentTemplate.width - 40}px`;
-                        clonedDiv.style.height = `${finalHeight}px`;
+                        // Set width and height via CSS classes and custom properties
+                        clonedDiv.classList.add('cloned-preview-container');
+                        clonedDiv.classList.add(`template-width-${this.currentTemplate.width - 40}`);
+                        clonedDiv.style.setProperty('--content-height', `${finalHeight}px`);
+                        clonedDiv.classList.add('dynamic-height');
                         clonedDiv.classList.add('enhanced-text-rendering');
                         
-                        // Make sure the style classes are properly applied to the cloned document
-                        // This ensures the styling is preserved during the html2canvas conversion
+                        // Make sure the style classes are properly applied
                         if (!clonedDiv.classList.contains('markdown-style-base')) {
                             clonedDiv.classList.add('markdown-style-base');
                         }
                         
-                        // Add the specific style class if it's not already there
                         const styleClass = `markdown-style-${this.currentStyle}`;
                         if (!clonedDiv.classList.contains(styleClass)) {
                             clonedDiv.classList.add(styleClass);
@@ -204,8 +206,10 @@ class TextPreviewModal extends Modal {
             const finalWidth = Math.min(width + 300, maxWidth); // 300px 是左侧面板宽度
             const finalHeight = Math.min(height + 80, maxHeight); // 添加额外的高度用于顶部和底部
             
-            modalElement.style.width = `${finalWidth}px`;
-            modalElement.style.height = `${finalHeight}px`;
+            // Use CSS custom properties for dynamic sizing
+            modalElement.style.setProperty('--modal-width', `${finalWidth}px`);
+            modalElement.style.setProperty('--modal-height', `${finalHeight}px`);
+            modalElement.classList.add('modal-size');
             
             // 添加flex布局
             modalElement.classList.add('modal-layout');
@@ -234,106 +238,6 @@ class TextPreviewModal extends Modal {
         // 创建模板选择器
         const templateSelector = themeSection.createDiv({ cls: 'template-selector' });
         
-        // 2. 创建缩放控制区域
-        const zoomSection = controlsPanel.createDiv({ cls: 'control-section' });
-        zoomSection.createEl('div', { text: '调整大小', cls: 'section-title' });
-        
-        // 创建缩放控制
-        const zoomControls = zoomSection.createDiv({ cls: 'zoom-controls' });
-        
-        const zoomOutBtn = zoomControls.createEl('button', {
-            cls: 'zoom-button zoom-out',
-            attr: { 'aria-label': '缩小预览' }
-        });
-        
-        // Replace innerHTML with DOM API
-        const zoomOutIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        zoomOutIcon.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-        zoomOutIcon.setAttribute('width', '18');
-        zoomOutIcon.setAttribute('height', '18');
-        zoomOutIcon.setAttribute('viewBox', '0 0 24 24');
-        zoomOutIcon.setAttribute('fill', 'none');
-        zoomOutIcon.setAttribute('stroke', 'currentColor');
-        zoomOutIcon.setAttribute('stroke-width', '2');
-        zoomOutIcon.setAttribute('stroke-linecap', 'round');
-        zoomOutIcon.setAttribute('stroke-linejoin', 'round');
-        zoomOutIcon.classList.add('zoom-out-icon');
-        
-        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        circle.setAttribute('cx', '11');
-        circle.setAttribute('cy', '11');
-        circle.setAttribute('r', '8');
-        
-        const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line1.setAttribute('x1', '21');
-        line1.setAttribute('y1', '21');
-        line1.setAttribute('x2', '16.65');
-        line1.setAttribute('y2', '16.65');
-        
-        const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line2.setAttribute('x1', '8');
-        line2.setAttribute('y1', '11');
-        line2.setAttribute('x2', '14');
-        line2.setAttribute('y2', '11');
-        
-        zoomOutIcon.appendChild(circle);
-        zoomOutIcon.appendChild(line1);
-        zoomOutIcon.appendChild(line2);
-        zoomOutBtn.appendChild(zoomOutIcon);
-
-        const zoomText = zoomControls.createEl('span', {
-            cls: 'zoom-text',
-            text: '100%'
-        });
-
-        const zoomInBtn = zoomControls.createEl('button', {
-            cls: 'zoom-button zoom-in',
-            attr: { 'aria-label': '放大预览' }
-        });
-        
-        // Replace innerHTML with DOM API
-        const zoomInIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        zoomInIcon.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-        zoomInIcon.setAttribute('width', '18');
-        zoomInIcon.setAttribute('height', '18');
-        zoomInIcon.setAttribute('viewBox', '0 0 24 24');
-        zoomInIcon.setAttribute('fill', 'none');
-        zoomInIcon.setAttribute('stroke', 'currentColor');
-        zoomInIcon.setAttribute('stroke-width', '2');
-        zoomInIcon.setAttribute('stroke-linecap', 'round');
-        zoomInIcon.setAttribute('stroke-linejoin', 'round');
-        zoomInIcon.classList.add('zoom-in-icon');
-        
-        const circleIn = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        circleIn.setAttribute('cx', '11');
-        circleIn.setAttribute('cy', '11');
-        circleIn.setAttribute('r', '8');
-        
-        const line3 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line3.setAttribute('x1', '21');
-        line3.setAttribute('y1', '21');
-        line3.setAttribute('x2', '16.65');
-        line3.setAttribute('y2', '16.65');
-        
-        const line4 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line4.setAttribute('x1', '11');
-        line4.setAttribute('y1', '8');
-        line4.setAttribute('x2', '11');
-        line4.setAttribute('y2', '14');
-        
-        const line5 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line5.setAttribute('x1', '8');
-        line5.setAttribute('y1', '11');
-        line5.setAttribute('x2', '14');
-        line5.setAttribute('y2', '11');
-        
-        zoomInIcon.appendChild(circleIn);
-        zoomInIcon.appendChild(line3);
-        zoomInIcon.appendChild(line4);
-        zoomInIcon.appendChild(line5);
-        
-        zoomInBtn.appendChild(zoomInIcon);
-
         // 创建空间填充区域
         controlsPanel.createDiv({ cls: 'flex-spacer' });
 
@@ -573,9 +477,6 @@ class TextPreviewModal extends Modal {
                 
                 // 当模板变更时更新弹出框尺寸
                 adjustModalSize(newCanvas.width, newCanvas.height);
-                
-                // 始终使用100%缩放
-                adjustZoom(100);
             };
             if (template.id === 'default') {
                 templateButton.addClass('active');
@@ -604,10 +505,7 @@ class TextPreviewModal extends Modal {
             // 添加描述
             const styleDesc = document.createElement('small');
             styleDesc.textContent = style.description;
-            styleDesc.style.display = 'block';
-            styleDesc.style.fontSize = '12px';
-            styleDesc.style.opacity = '0.7';
-            styleDesc.style.marginTop = '4px';
+            styleDesc.classList.add('style-description');
             styleButton.appendChild(styleDesc);
             
             // 设置当前活动样式
@@ -642,27 +540,10 @@ class TextPreviewModal extends Modal {
                 const newCanvas = this.imageGenerator.getCanvas();
                 canvasContainer.appendChild(newCanvas);
                 
-                // 应用缩放
-                adjustZoom(zoomLevel);
+                // 更新模态框大小
+                adjustModalSize(newCanvas.width, newCanvas.height);
             });
         });
-        
-        // 缩放逻辑
-        function adjustZoom(level: number) {
-            const canvas = canvasContainer.querySelector('canvas');
-            if (!canvas) return;
-            
-            // 设置实际宽度值而不是百分比，确保缩放效果生效
-            const originalWidth = canvas.width;
-            canvas.classList.add('canvas-preview');
-            canvas.style.width = `${originalWidth * level / 100}px`;
-            
-            // 更新缩放文本
-            zoomText.textContent = `${level}%`;
-            
-            // 保存当前缩放级别
-            zoomLevel = level;
-        }
         
         // 等待初始画布渲染完成
         await this.imageGenerator.updateCanvas();
@@ -671,43 +552,6 @@ class TextPreviewModal extends Modal {
         
         // 更新模态框大小以适应画布
         adjustModalSize(canvas.width, canvas.height);
-
-        // 设置默认缩放比例为100%
-        let zoomLevel = 80;
-        adjustZoom(zoomLevel);
-
-        // 添加缩放按钮事件和动画
-        zoomOutBtn.addEventListener('click', () => {
-            if (zoomLevel > 50) {
-                zoomLevel -= 10;
-                adjustZoom(zoomLevel);
-                
-                // 添加点击动画
-                zoomOutBtn.animate([
-                    { transform: 'scale(0.9)' },
-                    { transform: 'scale(1)' }
-                ], {
-                    duration: 150,
-                    easing: 'ease-out'
-                });
-            }
-        });
-
-        zoomInBtn.addEventListener('click', () => {
-            if (zoomLevel < 200) {
-                zoomLevel += 10;
-                adjustZoom(zoomLevel);
-                
-                // 添加点击动画
-                zoomInBtn.animate([
-                    { transform: 'scale(0.9)' },
-                    { transform: 'scale(1)' }
-                ], {
-                    duration: 150,
-                    easing: 'ease-out'
-                });
-            }
-        });
 
         // 添加复制按钮点击事件
         copyButton.addEventListener('click', async () => {

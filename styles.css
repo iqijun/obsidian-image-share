@@ -179,8 +179,7 @@ If your plugin does not need CSS, delete this file.
     min-height: 200px;
     width: 100%;
     flex: 1;
-    overflow-x: auto;
-    overflow-y: auto;
+    overflow: auto;
     -webkit-overflow-scrolling: touch;
     transition: background-color 0.3s ease;
 }
@@ -205,7 +204,7 @@ If your plugin does not need CSS, delete this file.
 
 
 .image-share-modal canvas {
-    height: auto;
+    height: auto !important;
     border-radius: 0;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
     image-rendering: -webkit-optimize-contrast;
@@ -214,8 +213,6 @@ If your plugin does not need CSS, delete this file.
     backface-visibility: hidden;
     min-width: auto;
     min-height: auto;
-    transition: width 0.3s ease, height 0.3s ease;
-    transform-origin: top left;
 }
 
 .image-share-modal .template-selector {
@@ -336,50 +333,6 @@ If your plugin does not need CSS, delete this file.
 
 .theme-dark .elegant-download-button svg {
     color: var(--text-on-accent);
-}
-
-/* 添加缩放控制样式 */
-.image-share-modal .zoom-controls {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 0;
-    padding: 12px 16px;
-    background: #252525;
-    border-radius: 8px;
-    width: 100%;
-}
-
-.image-share-modal .zoom-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: none;
-    background: #181818;
-    color: #aaaaaa;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-}
-
-.image-share-modal .zoom-button:hover {
-    background: #7c5ef2;
-    color: #ffffff;
-    transform: translateY(-2px);
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
-}
-
-.image-share-modal .zoom-text {
-    font-size: 14px;
-    font-weight: 600;
-    color: #e0e0e0;
-    width: 50px;
-    text-align: center;
-    user-select: none;
 }
 
 /* 下载提示样式 */
@@ -597,8 +550,7 @@ If your plugin does not need CSS, delete this file.
 
 /* Canvas scaling classes */
 .canvas-preview {
-    max-width: none;
-    transition: width 0.3s ease;
+    display: none;
 }
 
 /* Markdown styles that can be switched between */
@@ -953,4 +905,60 @@ If your plugin does not need CSS, delete this file.
     background: #7c5ef2;
     color: #ffffff;
     box-shadow: 0 2px 8px rgba(124, 94, 242, 0.4);
+}
+
+/* Dynamic sizing classes */
+.cloned-preview-container {
+    padding: 24px;
+    box-sizing: border-box;
+}
+
+.temp-container {
+    box-sizing: border-box;
+    padding: 24px;
+}
+
+/* Width classes for different templates */
+.template-width-800 {
+    width: 800px;
+}
+
+.template-width-760 {
+    width: 760px; /* 800px - 40px padding */
+}
+
+/* Dynamic height class that will be set via CSS custom property */
+.dynamic-height {
+    height: var(--content-height);
+}
+
+/* Temporary div styles */
+.temp-div {
+    width: var(--template-width);
+    padding: 24px;
+    box-sizing: border-box;
+}
+
+/* Style description text */
+.style-description {
+    display: block;
+    font-size: 12px;
+    opacity: 0.7;
+    margin-top: 4px;
+}
+
+/* Modal sizing classes */
+.modal-size {
+    width: var(--modal-width);
+    height: var(--modal-height);
+}
+
+/* 移除缩放控制样式 */
+.image-share-modal .zoom-controls,
+.image-share-modal .zoom-button,
+.image-share-modal .zoom-text,
+.zoom-out-icon,
+.zoom-in-icon,
+.canvas-preview {
+    display: none;
 }

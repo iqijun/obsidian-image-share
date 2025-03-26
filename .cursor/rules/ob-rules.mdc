@@ -1,0 +1,9 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Your rule content
+
+1. You should avoid assigning styles via JavaScript or in HTML and instead move all these styles into CSS so that they are more easily adaptable by themes and snippets
