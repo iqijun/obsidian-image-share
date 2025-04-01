@@ -735,150 +735,346 @@ If your plugin does not need CSS, delete this file.
     background-color: #009688;
 }
 
-/* Modern style theme */
+/* Modern style theme - Based on dedao.css */
 .markdown-style-modern {
-    /* Modern style has different colors and spacing */
+    font-family: "Open Sans","Clear Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
+    color: rgb(51, 51, 51);
+    line-height: 1.6;
+    font-size: 16px;
 }
 
-.markdown-style-modern strong, 
-.markdown-style-modern b {
-    color: #E91E63;
+.markdown-style-modern p,
+.markdown-style-modern blockquote,
+.markdown-style-modern ul,
+.markdown-style-modern ol,
+.markdown-style-modern dl,
+.markdown-style-modern table {
+    margin: 0.8em 0;
 }
 
-.markdown-style-modern em, 
-.markdown-style-modern i {
-    color: #2196F3;
+.markdown-style-modern li>ol,
+.markdown-style-modern li>ul {
+    margin: 0 0;
 }
 
-.markdown-style-modern hr {
-    border: 1px solid #E91E63;
-    margin: 1.5em auto;
+.markdown-style-modern a {
+    color: #4183C4;
+    text-decoration: none;
 }
 
-.markdown-style-modern blockquote, 
-.markdown-style-modern q {
-    border-left: 2px solid #2196F3;
-    padding: 0 10px;
-    color: #555;
-    quotes: none;
-    margin-left: 1em;
+.markdown-style-modern strong {
+    color: #FF992A; /* 橘黄色强调 */
+    font-weight: bold;
 }
 
-.markdown-style-modern h1, 
-.markdown-style-modern h2, 
-.markdown-style-modern h3, 
-.markdown-style-modern h4, 
-.markdown-style-modern h5, 
+.markdown-style-modern em {
+    color: #138C57; /* 绿色斜体，与引用块颜色一致 */
+    font-style: italic;
+}
+
+.markdown-style-modern h1,
+.markdown-style-modern h2,
+.markdown-style-modern h3,
+.markdown-style-modern h4,
+.markdown-style-modern h5,
 .markdown-style-modern h6 {
-    font-style: bold !important;
-    color: #2196F3 !important;
+    position: relative;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    font-weight: bold;
+    line-height: 1.4;
+    cursor: text;
+    color: #FF992A !important;
     text-align: center !important;
+    font-family: inherit !important;
     margin: 1.5em 5px !important;
     padding: 0.5em 1em !important;
 }
 
 .markdown-style-modern h1 {
+    padding-bottom: .3em;
     font-size: 24px !important;
-    border-bottom: 1px solid #eee !important;
+    line-height: 1.2;
+    border-bottom: 1px solid #eee;
 }
 
 .markdown-style-modern h2 {
+    padding-bottom: .3em;
     font-size: 20px !important;
-    border-bottom: 1px solid #f5f5f5 !important;
+    line-height: 1.225;
+    border-bottom: 1px solid #eee;
 }
 
 .markdown-style-modern h3 {
-    font-size: 18px;
+    font-size: 18px !important;
+    line-height: 1.43;
 }
 
 .markdown-style-modern h4 {
-    font-size: 16px;
+    font-size: 16px !important;
+}
+
+.markdown-style-modern h5 {
+    font-size: 1em;
+}
+
+.markdown-style-modern h6 {
+    font-size: 1em;
+    color: #777;
+}
+
+.markdown-style-modern ul,
+.markdown-style-modern ol {
+    padding-left: 30px;
+}
+
+.markdown-style-modern ul:first-child,
+.markdown-style-modern ol:first-child {
+    margin-top: 0;
+}
+
+.markdown-style-modern ul:last-child,
+.markdown-style-modern ol:last-child {
+    margin-bottom: 0;
+}
+
+.markdown-style-modern blockquote {
+    border-left: 3px solid #138C57;
+    padding: 0 15px;
+    color: #777777;
+    background-color: #f9f9f9;
+}
+
+.markdown-style-modern blockquote blockquote {
+    padding-right: 0;
+}
+
+.markdown-style-modern table {
+    padding: 0;
+    word-break: initial;
+}
+
+.markdown-style-modern table tr {
+    border-top: 1px solid #cccccc;
+    background-color: white;
+    margin: 0;
+    padding: 0;
+}
+
+.markdown-style-modern table tr:nth-child(2n) {
+    background-color: #f8f8f8;
 }
 
 .markdown-style-modern table tr th {
     font-weight: bold;
-    color: #fff;
-    border: 1px solid #2196F3;
-    background-color: #2196F3;
+    border: 1px solid #cccccc;
+    text-align: left;
+    margin: 0;
+    padding: 6px 13px;
 }
 
-/* Minimal style theme */
+.markdown-style-modern table tr td {
+    border: 1px solid #cccccc;
+    text-align: left;
+    margin: 0;
+    padding: 6px 13px;
+}
+
+.markdown-style-modern pre,
+.markdown-style-modern code,
+.markdown-style-modern tt {
+    border: 1px solid #ddd;
+    color: #A04B01; /* 暖色调代码 */
+    background-color: #f8f8f8;
+    border-radius: 3px;
+    font-family: Consolas, "Liberation Mono", Courier, monospace;
+    padding: 2px 4px 0px 4px;
+    font-size: 0.9em;
+}
+
+.markdown-style-modern .md-fences {
+    border: 1px solid #ddd;
+    color: #A04B01; /* 暖色调代码 */
+    background-color: #f8f8f8;
+    border-radius: 3px;
+    font-family: Consolas, "Liberation Mono", Courier, monospace;
+    padding: 2px 4px 0px 4px;
+    font-size: 0.9em;
+}
+
+.markdown-style-modern pre {
+    margin-bottom: 15px;
+    margin-top: 15px;
+    padding: 0.2em 1em;
+    padding-top: 8px;
+    padding-bottom: 6px;
+}
+
+.markdown-style-modern hr {
+    height: 4px;
+    padding: 0;
+    margin: 16px 0;
+    background-color: #e7e7e7;
+    border: 0 none;
+    overflow: hidden;
+    box-sizing: content-box;
+    border-bottom: 1px solid #ddd;
+}
+
+/* Minimal style theme - Based on markdown-sspai.css */
 .markdown-style-minimal {
-    /* Minimal style with subtle colors and clean look */
+    font-size: 15px;
+    color: #333;
+    line-height: 1.8;
+    letter-spacing: 0.05em;
 }
 
-.markdown-style-minimal strong, 
-.markdown-style-minimal b {
-    color: #424242;
-    font-weight: 600;
-}
-
-.markdown-style-minimal em, 
-.markdown-style-minimal i {
-    color: #616161;
-}
-
-.markdown-style-minimal hr {
-    border: 1px solid #e0e0e0;
-    margin: 1.5em auto;
-}
-
-.markdown-style-minimal blockquote, 
-.markdown-style-minimal q {
-    border-left: 2px solid #e0e0e0;
-    padding: 0 10px;
-    color: #757575;
-    quotes: none;
-    margin-left: 1em;
-}
-
-.markdown-style-minimal h1, 
-.markdown-style-minimal h2, 
-.markdown-style-minimal h3, 
-.markdown-style-minimal h4, 
-.markdown-style-minimal h5, 
+.markdown-style-minimal h1,
+.markdown-style-minimal h2,
+.markdown-style-minimal h3,
+.markdown-style-minimal h4,
+.markdown-style-minimal h5,
 .markdown-style-minimal h6 {
-    font-style: normal !important;
-    color: #424242 !important;
-    text-align: left !important;
+    position: relative;
     margin: 1.5em 5px !important;
-    padding: 0.3em 0 !important;
+    padding: 0.5em 1em !important;
+    font-weight: bold !important;
+    line-height: 1.4 !important;
+    color: #f55852 !important;
+    text-align: center !important;
+    font-family: inherit !important;
+    text-transform: none !important;
+    border-left: none !important;
 }
 
 .markdown-style-minimal h1 {
     font-size: 24px !important;
-    border-bottom: 1px solid #f5f5f5 !important;
+    border-bottom: 1px solid #ddd !important;
+    line-height: 1.2 !important;
+    padding-top: 0.5em !important;
+    padding-bottom: 0.8em !important;
 }
 
 .markdown-style-minimal h2 {
     font-size: 20px !important;
-    border-bottom: 1px solid #fafafa !important;
+    border-bottom: 1px solid #eee !important;
+    line-height: 1.225 !important;
+    padding-bottom: 0.8em !important;
+    margin-top: 20px !important;
 }
 
 .markdown-style-minimal h3 {
-    font-size: 18px;
+    font-size: 18px !important;
 }
 
 .markdown-style-minimal h4 {
-    font-size: 16px;
+    font-size: 16px !important;
 }
 
-.markdown-style-minimal table tr th {
-    font-weight: 500;
-    color: #424242;
-    border: 1px solid #e0e0e0;
-    background-color: #fafafa;
+.markdown-style-minimal h5, 
+.markdown-style-minimal h6 {
+    font-size: .9em !important;
 }
 
-/* Style selector UI */
-.style-selector {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+.markdown-style-minimal h5 {
+    font-weight: bold !important;
+    text-transform: uppercase !important;
+}
+
+.markdown-style-minimal h6 {
+    font-weight: normal !important;
+    color: #AAA !important;
+}
+
+.markdown-style-minimal img {
     width: 100%;
+    border-radius: 5px;
+    display: block;
+    margin-bottom: 15px;
+    height: auto;
 }
 
+.markdown-style-minimal dl, 
+.markdown-style-minimal ol, 
+.markdown-style-minimal ul {
+    margin-top: 12px;
+    margin-bottom: 20px;
+    padding-left: 5%;
+    line-height: 1.8;
+}
+
+.markdown-style-minimal p {
+    margin: 0 0 20px !important;
+    padding: 0 !important;
+    line-height: 1.8 !important;
+}
+
+.markdown-style-minimal a {
+    color: #f22f27;
+    text-decoration: none;
+}
+
+.markdown-style-minimal a:hover {
+    color: #f55852;
+    text-decoration: underline;
+}
+
+.markdown-style-minimal blockquote {
+    font-size: 1em;
+    font-style: normal;
+    padding: 20px 30px;
+    margin: 0 0 15px;
+    position: relative;
+    line-height: 1.8;
+    text-indent: 0;
+    border-left: 4px solid #f22f27; /* 少数派标志红色边框 */
+    background-color: #fafafa;
+    color: #666;
+}
+
+.markdown-style-minimal blockquote:before,
+.markdown-style-minimal blockquote:after {
+    display: none; /* 移除引号装饰 */
+}
+
+.markdown-style-minimal code {
+    color: #f22f27; /* 少数派标志红色代码 */
+    background-color: #f8f8f8;
+    border-radius: 3px;
+    font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+    padding: 2px 4px;
+    font-size: 90%;
+    border: none;
+}
+
+.markdown-style-minimal pre {
+    margin: 0 0 20px;
+    font-size: 13px;
+    line-height: 1.42857;
+    word-break: break-all;
+    word-wrap: break-word;
+    border-radius: 4px;
+    white-space: pre-wrap;
+    display: block;
+    background: #f8f8f8;
+    padding: 12px 20px;
+    border-left: 4px solid #f22f27; /* 少数派标志红色边框 */
+    border-top: none;
+    border-right: none;
+    border-bottom: none;
+    margin-bottom: 25px;
+    color: #555;
+    font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+}
+
+.markdown-style-minimal li {
+    margin-bottom: 0.75em;
+    margin-top: 0.75em;
+}
+
+/* Style selector UI 调整按钮样式 */
 .style-button {
+    position: relative;
     padding: 12px 16px;
     border: none;
     border-radius: 8px;
@@ -889,22 +1085,53 @@ If your plugin does not need CSS, delete this file.
     font-size: 14px;
     font-weight: 500;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    height: auto;
+    min-height: 48px;
+    border-left: 4px solid transparent;
     display: flex;
     align-items: center;
-    gap: 8px;
-    text-align: left;
+    justify-content: center;
 }
 
+/* 鼠标悬停效果 */
 .style-button:hover {
     background: #303030;
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
 }
 
+/* 被选中的样式按钮 */
 .style-button.active {
-    background: #7c5ef2;
+    background: #252525;
     color: #ffffff;
     box-shadow: 0 2px 8px rgba(124, 94, 242, 0.4);
+    border-left: 4px solid #7c5ef2;
+    padding-left: 16px;
+}
+
+/* 样式描述文本 */
+.style-description {
+    display: block;
+    font-size: 12px;
+    opacity: 0.7;
+    margin-top: 4px;
+}
+
+/* Modal sizing classes */
+.modal-size {
+    width: var(--modal-width);
+    height: var(--modal-height);
+}
+
+/* 移除缩放控制样式 */
+.image-share-modal .zoom-controls,
+.image-share-modal .zoom-button,
+.image-share-modal .zoom-text,
+.zoom-out-icon,
+.zoom-in-icon,
+.canvas-preview {
+    display: none;
 }
 
 /* Dynamic sizing classes */
@@ -939,6 +1166,52 @@ If your plugin does not need CSS, delete this file.
     box-sizing: border-box;
 }
 
+/* Style selector UI */
+.style-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+/* Style button appearance */
+.style-button {
+    position: relative;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 8px;
+    background: #252525;
+    color: #e0e0e0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    height: auto;
+    min-height: 48px;
+    border-left: 4px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Hover effect for style buttons */
+.style-button:hover {
+    background: #303030;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+}
+
+/* Active state for style buttons */
+.style-button.active {
+    background: #252525;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(124, 94, 242, 0.4);
+    border-left: 4px solid #7c5ef2;
+    padding-left: 16px;
+}
+
 /* Style description text */
 .style-description {
     display: block;
@@ -947,18 +1220,105 @@ If your plugin does not need CSS, delete this file.
     margin-top: 4px;
 }
 
-/* Modal sizing classes */
+/* Modal sizing */
 .modal-size {
     width: var(--modal-width);
     height: var(--modal-height);
 }
 
-/* 移除缩放控制样式 */
-.image-share-modal .zoom-controls,
-.image-share-modal .zoom-button,
-.image-share-modal .zoom-text,
-.zoom-out-icon,
-.zoom-in-icon,
-.canvas-preview {
-    display: none;
+.markdown-style-minimal strong {
+    font-weight: 700;
+    color: #f22f27; /* 少数派标志红色 */
+}
+
+.markdown-style-minimal em {
+    font-style: italic;
+    font-weight: 400;
+    color: #555; /* 更明显的斜体颜色 */
+}
+
+/* 修改有序列表基本样式，让序号更突出 */
+.markdown-style-base ol {
+    list-style-type: none;
+    counter-reset: item;
+    padding-left: 20px;
+    margin-left: 0;
+}
+
+.markdown-style-base ol > li {
+    counter-increment: item;
+    position: relative;
+    padding-left: 2em;
+    margin-bottom: 0.8em;
+    line-height: 1.6em;
+}
+
+.markdown-style-base ol > li::before {
+    content: counter(item) ".";
+    position: absolute;
+    left: 0;
+    font-weight: 700; /* 加粗数字 */
+    display: inline-block;
+    width: 1.5em;
+    text-align: right;
+    color: #333333; /* 统一使用黑色 */
+    margin-right: 0.5em;
+    font-size: 1em; /* 保持与正文一致的字体大小 */
+}
+
+/* 针对深色背景的样式调整 */
+.dark-theme .markdown-style-base ol > li::before,
+.temp-markdown-container.dark-theme ol > li::before {
+    color: #e0e0e0; /* 深色主题使用浅色文字 */
+}
+
+/* 调整嵌套列表的样式 */
+.markdown-style-base ol ol {
+    counter-reset: subitem;
+    padding-left: 0;
+    margin-top: 0.6em;
+}
+
+.markdown-style-base ol ol > li {
+    counter-increment: subitem;
+    padding-left: 2.5em;
+}
+
+.markdown-style-base ol ol > li::before {
+    content: counter(item) "." counter(subitem) ".";
+    width: 3em; /* 为嵌套编号提供更多空间 */
+    font-weight: 600; /* 二级列表稍微淡一点 */
+}
+
+/* 默认样式特定列表样式 */
+.markdown-style-default ol > li::before {
+    /* color: #009688; 移除颜色，使用基础样式中的黑色 */
+    font-weight: 600;
+    opacity: 0.9;
+}
+
+/* 得到样式特定列表样式 */
+.markdown-style-modern ol > li::before {
+    /* color: #FF992A; 移除颜色，使用基础样式中的黑色 */
+    font-weight: 600;
+    opacity: 0.9;
+}
+
+/* 少数派样式特定列表样式 */
+.markdown-style-minimal ol > li::before {
+    /* color: #f22f27; 移除颜色，使用基础样式中的黑色 */
+    font-weight: 600;
+    opacity: 0.9;
+}
+
+/* 列表整体间距调整 */
+.markdown-style-base ol {
+    margin-top: 1.2em;
+    margin-bottom: 1.2em;
+}
+
+/* 自定义列表项内容 */
+.markdown-style-base ol > li > p:first-child {
+    display: inline;
+    margin-top: 0 !important;
 }

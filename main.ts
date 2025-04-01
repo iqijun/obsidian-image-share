@@ -78,15 +78,17 @@ class ImageGenerator {
                         clonedDiv.classList.add('dynamic-height');
                         clonedDiv.classList.add('enhanced-text-rendering');
                         
-                        // Make sure the style classes are properly applied
+                        // 确保所有样式类都被正确应用
+                        clonedDiv.classList.remove('markdown-style-default', 'markdown-style-modern', 'markdown-style-minimal');
+                        
+                        // 添加基础样式类
                         if (!clonedDiv.classList.contains('markdown-style-base')) {
                             clonedDiv.classList.add('markdown-style-base');
                         }
                         
+                        // 添加当前选择的样式类
                         const styleClass = `markdown-style-${this.currentStyle}`;
-                        if (!clonedDiv.classList.contains(styleClass)) {
-                            clonedDiv.classList.add(styleClass);
-                        }
+                        clonedDiv.classList.add(styleClass);
                     }
                 }
             });
@@ -103,8 +105,10 @@ class ImageGenerator {
 
     // Add a method to set the style
     public async setStyle(style: string) {
-        this.currentStyle = style;
-        await this.updateCanvas();
+        if (this.currentStyle !== style) {
+            this.currentStyle = style;
+            await this.updateCanvas();
+        }
     }
 
     // Add a method to get the current style
@@ -451,10 +455,6 @@ class TextPreviewModal extends Modal {
                 templateButton.appendChild(darkIcon);
             }
             
-            const templateText = document.createElement('span');
-            templateText.textContent = template.name;
-            templateButton.appendChild(templateText);
-            
             templateButton.onclick = async () => {
                 templateSelector.findAll('.template-button').forEach(btn => 
                     btn.removeClass('active')
@@ -494,19 +494,9 @@ class TextPreviewModal extends Modal {
         MARKDOWN_STYLES.forEach(style => {
             const styleButton = styleSelector.createEl('button', {
                 cls: 'style-button',
-                attr: { 'data-style': style.id }
+                text: style.name,
+                attr: { 'data-style': style.id, 'title': style.description }
             });
-            
-            // 创建样式标题
-            const styleTitle = document.createElement('span');
-            styleTitle.textContent = style.name;
-            styleButton.appendChild(styleTitle);
-            
-            // 添加描述
-            const styleDesc = document.createElement('small');
-            styleDesc.textContent = style.description;
-            styleDesc.classList.add('style-description');
-            styleButton.appendChild(styleDesc);
             
             // 设置当前活动样式
             if (style.id === this.imageGenerator.getCurrentStyle()) {
@@ -771,13 +761,13 @@ const MARKDOWN_STYLES = [
     },
     {
         id: 'modern',
-        name: '现代样式',
-        description: '现代设计风格，蓝色和粉色强调'
+        name: '得到样式',
+        description: '知识付费平台"得到"的清晰阅读风格'
     },
     {
         id: 'minimal',
-        name: '极简样式',
-        description: '简约而优雅的黑白设计'
+        name: '少数派样式',
+        description: '简约优雅的排版，橙红色点缀'
     }
 ];
 
