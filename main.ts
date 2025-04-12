@@ -10,6 +10,12 @@ class ImageGenerator {
     private currentTemplate: ShareTemplate;
     private currentStyle = 'default'; // Removed type annotation
     private app: App;
+    private customTheme = {
+        bgColor: '#ffffff',
+        textColor: '#333333',
+        bgImage: null as string | null,
+        bgOpacity: 0.15
+    };
 
     constructor(app: App, text: string) {
         this.app = app;
@@ -20,43 +26,10 @@ class ImageGenerator {
 
     public async updateCanvas() {
         try {
-            const tempDiv = document.createElement('div');
-            tempDiv.className = 'markdown-preview-view markdown-rendered temp-markdown-container temp-container';
-            tempDiv.classList.add(this.currentTemplate.id === 'dark' ? 'dark-theme' : 'light-theme');
-            // Add the markdown style classes
-            tempDiv.classList.add('markdown-style-base');
-            tempDiv.classList.add(`markdown-style-${this.currentStyle}`);
+            // 使用renderMarkdown方法创建和渲染内容
+            const { tempDiv, finalHeight } = await this.renderMarkdown();
             
-            // Set template width via CSS custom property
-            tempDiv.style.setProperty('--template-width', `${this.currentTemplate.width}px`);
-            tempDiv.classList.add('temp-div');
-
-            // 添加日期
-            const dateDiv = tempDiv.createDiv({ cls: 'metadata-container temp-date-metadata' });
-            dateDiv.classList.add(this.currentTemplate.id === 'dark' ? 'dark-theme' : 'light-theme');
-            dateDiv.textContent = new Date().toLocaleDateString();
-
-            // 添加内容容器
-            const contentDiv = tempDiv.createDiv({ cls: 'markdown-preview-sizer' });
-            
-            // 渲染 Markdown
-            await MarkdownRenderer.render(
-                this.app,
-                this.text,
-                contentDiv,
-                '',
-                new Component()
-            );
-
-            document.body.appendChild(tempDiv);
-            
-            // 获取实际内容高度，包括内边距
-            const actualHeight = tempDiv.scrollHeight;
-            // 确保最小高度
-            const minHeight = 200;
-            const finalHeight = Math.max(actualHeight, minHeight);
-
-            // 增加像素密度和图像质量
+            // 调用html2canvas渲染为图像
             const renderedCanvas = await html2canvas(tempDiv, {
                 width: this.currentTemplate.width,
                 height: finalHeight,
@@ -71,35 +44,30 @@ class ImageGenerator {
                 onclone: (clonedDoc) => {
                     const clonedDiv = clonedDoc.querySelector('.markdown-preview-view') as HTMLElement;
                     if (clonedDiv) {
-                        // Set width and height via CSS classes and custom properties
+                        // 设置宽度和高度
                         clonedDiv.classList.add('cloned-preview-container');
                         clonedDiv.classList.add(`template-width-${this.currentTemplate.width - 40}`);
                         clonedDiv.style.setProperty('--content-height', `${finalHeight}px`);
                         clonedDiv.classList.add('dynamic-height');
                         clonedDiv.classList.add('enhanced-text-rendering');
                         
-                        // 确保所有样式类都被正确应用
-                        clonedDiv.classList.remove('markdown-style-default', 'markdown-style-modern', 'markdown-style-minimal');
-                        
-                        // 添加基础样式类
-                        if (!clonedDiv.classList.contains('markdown-style-base')) {
+                        // 确保样式类正确应用
+                        if (this.currentStyle !== 'custom') {
+                            clonedDiv.classList.remove('markdown-style-default', 'markdown-style-modern', 'markdown-style-minimal', 'markdown-style-custom');
                             clonedDiv.classList.add('markdown-style-base');
+                            clonedDiv.classList.add(`markdown-style-${this.currentStyle}`);
                         }
-                        
-                        // 添加当前选择的样式类
-                        const styleClass = `markdown-style-${this.currentStyle}`;
-                        clonedDiv.classList.add(styleClass);
                     }
                 }
             });
-
-            // 更新画布
+            
+            // 更新画布引用
             this.canvas = renderedCanvas;
-
+            
             // 清理临时元素
             document.body.removeChild(tempDiv);
         } catch (error) {
-            console.error('Error rendering markdown:', error);
+            console.error('Error updating canvas:', error);
         }
     }
 
@@ -177,15 +145,120 @@ class ImageGenerator {
     public getCurrentTemplate(): ShareTemplate {
         return this.currentTemplate;
     }
+
+    // 设置自定义主题
+    setCustomTheme(theme: {
+        bgColor: string,
+        textColor: string,
+        bgImage: string | null,
+        bgOpacity: number
+    }) {
+        this.customTheme = { ...theme };
+    }
+    
+    // 修复自定义主题渲染逻辑
+    async renderMarkdown() {
+        try {
+            // 创建临时div用于渲染
+            const tempDiv = document.createElement('div');
+            tempDiv.className = 'markdown-preview-view markdown-rendered temp-markdown-container temp-container';
+            tempDiv.classList.add(this.currentTemplate.id === 'dark' ? 'dark-theme' : 'light-theme');
+            
+            // 添加基础Markdown样式类
+            tempDiv.classList.add('markdown-style-base');
+            
+            // 如果不是自定义样式，添加当前样式类
+            if (this.currentStyle !== 'custom') {
+                tempDiv.classList.add(`markdown-style-${this.currentStyle}`);
+            } else {
+                tempDiv.classList.add('markdown-style-custom');
+            }
+            
+            // 设置模板宽度
+            tempDiv.style.setProperty('--template-width', `${this.currentTemplate.width}px`);
+            tempDiv.classList.add('temp-div');
+
+            // 添加日期
+            const dateDiv = tempDiv.createDiv({ cls: 'metadata-container temp-date-metadata' });
+            dateDiv.classList.add(this.currentTemplate.id === 'dark' ? 'dark-theme' : 'light-theme');
+            dateDiv.textContent = new Date().toLocaleDateString();
+
+            // 添加内容容器
+            const contentDiv = tempDiv.createDiv({ cls: 'markdown-preview-sizer' });
+            
+            // 渲染 Markdown
+            await MarkdownRenderer.render(
+                this.app,
+                this.text,
+                contentDiv,
+                '',
+                new Component()
+            );
+
+            // 如果是自定义样式，包装在自定义容器中
+            if (this.currentStyle === 'custom') {
+                // 保存原始内容
+                const originalContent = tempDiv.innerHTML;
+                
+                // 创建自定义背景容器
+                const customContainer = document.createElement('div');
+                customContainer.className = 'custom-background-container';
+                customContainer.style.setProperty('--custom-bg-color', this.customTheme.bgColor);
+                customContainer.style.setProperty('--custom-text-color', this.customTheme.textColor);
+                
+                // 如果有背景图片，添加背景图片
+                if (this.customTheme.bgImage) {
+                    const bgImage = document.createElement('img');
+                    bgImage.className = 'custom-background-image';
+                    bgImage.src = this.customTheme.bgImage;
+                    bgImage.style.setProperty('--custom-bg-opacity', String(this.customTheme.bgOpacity));
+                    customContainer.appendChild(bgImage);
+                }
+                
+                // 创建内容包装器并将原始内容放入
+                const contentWrapper = document.createElement('div');
+                contentWrapper.className = 'custom-content-wrapper';
+                contentWrapper.innerHTML = originalContent;
+                
+                // 将内容包装器添加到自定义容器
+                customContainer.appendChild(contentWrapper);
+                
+                // 清空原容器并添加自定义容器
+                tempDiv.innerHTML = '';
+                tempDiv.appendChild(customContainer);
+            }
+            
+            // 添加到文档以便渲染
+            document.body.appendChild(tempDiv);
+            
+            // 获取实际高度并设置最小高度
+            const actualHeight = tempDiv.scrollHeight;
+            const minHeight = 200;
+            const finalHeight = Math.max(actualHeight, minHeight);
+            
+            return { tempDiv, finalHeight };
+        } catch (error) {
+            console.error('Error in renderMarkdown:', error);
+            throw error;
+        }
+    }
 }
 
 class TextPreviewModal extends Modal {
     private text: string;
     private imageGenerator: ImageGenerator;
+    private plugin: ImageSharePlugin;
+    private customBgColor = '#ffffff';
+    private customTextColor = '#333333';
+    private customBgImage: string | null = null;
+    private customBgOpacity = 0.15;
+    private customStyleName = '未命名样式';
+    private editingStyleId: string | null = null;
 
-    constructor(app: App, text: string) {
+    constructor(app: App, text: string, plugin: ImageSharePlugin) {
         super(app);
         this.text = text;
+        this.plugin = plugin;
         this.imageGenerator = new ImageGenerator(app, text);
     }
 
@@ -491,49 +564,7 @@ class TextPreviewModal extends Modal {
         const styleSelector = styleSection.createDiv({ cls: 'style-selector' });
         
         // 添加样式选择按钮
-        MARKDOWN_STYLES.forEach(style => {
-            const styleButton = styleSelector.createEl('button', {
-                cls: 'style-button',
-                text: style.name,
-                attr: { 'data-style': style.id, 'title': style.description }
-            });
-            
-            // 设置当前活动样式
-            if (style.id === this.imageGenerator.getCurrentStyle()) {
-                styleButton.classList.add('active');
-            }
-            
-            // 添加点击事件
-            styleButton.addEventListener('click', async () => {
-                // 移除所有活动状态
-                styleSelector.findAll('.style-button').forEach(btn => 
-                    btn.removeClass('active')
-                );
-                
-                // 设置当前按钮为活动状态
-                styleButton.addClass('active');
-                
-                // 添加动画效果
-                styleButton.animate([
-                    { transform: 'scale(0.95)' },
-                    { transform: 'scale(1)' }
-                ], {
-                    duration: 150,
-                    easing: 'ease-out'
-                });
-                
-                // 设置新样式并重新渲染
-                await this.imageGenerator.setStyle(style.id);
-                
-                // 更新画布
-                canvasContainer.empty();
-                const newCanvas = this.imageGenerator.getCanvas();
-                canvasContainer.appendChild(newCanvas);
-                
-                // 更新模态框大小
-                adjustModalSize(newCanvas.width, newCanvas.height);
-            });
-        });
+        await this.createStyleButtons(styleSelector);
         
         // 等待初始画布渲染完成
         await this.imageGenerator.updateCanvas();
@@ -726,6 +757,501 @@ class TextPreviewModal extends Modal {
         const {contentEl} = this;
         contentEl.empty();
     }
+
+    // 创建所有样式按钮
+    async createStyleButtons(container: HTMLElement) {
+        // 清空容器
+        container.empty();
+        
+        // 添加内置样式按钮
+        BUILT_IN_STYLES.forEach(style => this.createStyleButton(container, style));
+        
+        // 添加自定义样式按钮
+        const customStyles = this.plugin.getCustomStyles();
+        customStyles.forEach(style => {
+            this.createCustomStyleButton(container, style);
+        });
+        
+        // 添加创建新样式按钮
+        this.createNewStyleButton(container);
+    }
+    
+    // 创建标准样式按钮
+    createStyleButton(container: HTMLElement, style: {id: string, name: string, description: string}) {
+        const styleButton = container.createEl('button', {
+            cls: 'style-button',
+            attr: { 'data-style': style.id }
+        });
+        
+        // 创建样式图标
+        const iconEl = styleButton.createEl('div', { cls: 'style-button-icon' });
+        // 设置不同样式的图标
+        if (style.id === 'default') {
+            iconEl.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>';
+        } else if (style.id === 'modern') {
+            iconEl.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>';
+        } else if (style.id === 'minimal') {
+            iconEl.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>';
+        }
+        
+        // 创建内容容器
+        const contentEl = styleButton.createEl('div', { cls: 'style-button-content' });
+        contentEl.createEl('span', { text: style.name });
+        contentEl.createEl('span', { text: style.description, cls: 'style-description' });
+        
+        // 设置当前活动样式
+        if (style.id === this.imageGenerator.getCurrentStyle()) {
+            styleButton.classList.add('active');
+        }
+        
+        // 添加点击事件
+        styleButton.addEventListener('click', async (e) => {
+            // 如果点击的是按钮内部的操作按钮，不处理样式切换
+            if ((e.target as HTMLElement).closest('.style-button-actions')) {
+                return;
+            }
+            
+            // 移除所有活动状态
+            container.findAll('.style-button').forEach(btn => 
+                btn.removeClass('active')
+            );
+            
+            // 设置当前按钮为活动状态
+            styleButton.addClass('active');
+            
+            // 添加动画效果
+            styleButton.animate([
+                { transform: 'scale(0.95)' },
+                { transform: 'scale(1)' }
+            ], {
+                duration: 150,
+                easing: 'ease-out'
+            });
+            
+            // 设置新样式并重新渲染
+            await this.imageGenerator.setStyle(style.id);
+            
+            // 隐藏自定义主题设置面板
+            const existingCustomizer = container.querySelector('.theme-customizer');
+            if (existingCustomizer) {
+                existingCustomizer.remove();
+            }
+            
+            // 更新画布
+            this.updateCanvas();
+        });
+    }
+    
+    // 创建自定义样式按钮
+    createCustomStyleButton(container: HTMLElement, style: CustomStyle) {
+        const styleButton = container.createEl('button', {
+            cls: 'style-button',
+            attr: { 'data-style': style.id }
+        });
+        
+        // 创建样式图标
+        const iconEl = styleButton.createEl('div', { cls: 'style-button-icon' });
+        iconEl.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l.789.814-.707.7.729.678L12 4.95l-.811-.758-.729-.678.707-.7L12 2z"/><path d="M19 16l-7-2-7 2V3.9c0-.5.4-.9.9-.9H18c.5 0 .9.4.9.9V16z"/><path d="M12 22l-7-3v-3l7 3 7-3v3l-7 3z"/></svg>';
+        
+        // 创建内容容器
+        const contentEl = styleButton.createEl('div', { cls: 'style-button-content' });
+        contentEl.createEl('span', { text: style.name });
+        contentEl.createEl('span', { text: style.description, cls: 'style-description' });
+        
+        // 创建操作按钮容器
+        const actionsEl = styleButton.createEl('div', { cls: 'style-button-actions' });
+        
+        // 编辑按钮
+        const editBtn = actionsEl.createEl('button', { cls: 'style-edit-btn' });
+        editBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>';
+        
+        // 删除按钮
+        const deleteBtn = actionsEl.createEl('button', { cls: 'style-delete-btn' });
+        deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>';
+        
+        // 设置当前活动样式
+        if (style.id === this.imageGenerator.getCurrentStyle()) {
+            styleButton.classList.add('active');
+        }
+        
+        // 添加点击事件
+        styleButton.addEventListener('click', async (e) => {
+            // 如果点击的是按钮内部的操作按钮，不处理样式切换
+            if ((e.target as HTMLElement).closest('.style-button-actions')) {
+                return;
+            }
+            
+            // 移除所有活动状态
+            container.findAll('.style-button').forEach(btn => 
+                btn.removeClass('active')
+            );
+            
+            // 设置当前按钮为活动状态
+            styleButton.addClass('active');
+            
+            // 添加动画效果
+            styleButton.animate([
+                { transform: 'scale(0.95)' },
+                { transform: 'scale(1)' }
+            ], {
+                duration: 150,
+                easing: 'ease-out'
+            });
+            
+            // 设置新样式的自定义主题
+            this.customBgColor = style.bgColor;
+            this.customTextColor = style.textColor;
+            this.customBgImage = style.bgImage;
+            this.customBgOpacity = style.bgOpacity;
+            
+            // 应用自定义样式
+            await this.imageGenerator.setStyle('custom');
+            this.imageGenerator.setCustomTheme({
+                bgColor: style.bgColor,
+                textColor: style.textColor,
+                bgImage: style.bgImage,
+                bgOpacity: style.bgOpacity
+            });
+            
+            // 隐藏自定义主题设置面板
+            const existingCustomizer = container.querySelector('.theme-customizer');
+            if (existingCustomizer) {
+                existingCustomizer.remove();
+            }
+            
+            // 更新画布
+            this.updateCanvas();
+        });
+        
+        // 编辑按钮事件
+        editBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.editingStyleId = style.id;
+            this.customBgColor = style.bgColor;
+            this.customTextColor = style.textColor;
+            this.customBgImage = style.bgImage;
+            this.customBgOpacity = style.bgOpacity;
+            this.customStyleName = style.name;
+            
+            // 显示编辑面板
+            this.showCustomThemeSettings(container, true);
+        });
+        
+        // 删除按钮事件
+        deleteBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            
+            // 确认删除
+            if (confirm(`确定要删除样式 "${style.name}" 吗？`)) {
+                await this.plugin.deleteCustomStyle(style.id);
+                
+                // 重新创建样式按钮
+                this.createStyleButtons(container);
+                
+                // 如果当前正在使用被删除的样式，切换到默认样式
+                if (this.imageGenerator.getCurrentStyle() === style.id) {
+                    await this.imageGenerator.setStyle('default');
+                    this.updateCanvas();
+                }
+            }
+        });
+    }
+    
+    // 创建"新建样式"按钮
+    createNewStyleButton(container: HTMLElement) {
+        const newStyleButton = container.createEl('button', {
+            cls: 'style-button',
+            attr: { 'data-style': 'new-custom' }
+        });
+        
+        // 创建样式图标
+        const iconEl = newStyleButton.createEl('div', { cls: 'style-button-icon' });
+        iconEl.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>';
+        
+        // 创建内容容器
+        const contentEl = newStyleButton.createEl('div', { cls: 'style-button-content' });
+        contentEl.createEl('span', { text: '创建新样式' });
+        contentEl.createEl('span', { text: '自定义背景颜色或背景图片，创建专属风格', cls: 'style-description' });
+        
+        // 添加点击事件
+        newStyleButton.addEventListener('click', () => {
+            // 重置自定义主题设置
+            this.customBgColor = '#ffffff';
+            this.customTextColor = '#333333';
+            this.customBgImage = null;
+            this.customBgOpacity = 0.15;
+            this.customStyleName = '未命名样式';
+            this.editingStyleId = null;
+            
+            // 显示自定义主题设置面板
+            this.showCustomThemeSettings(container, false);
+            
+            // 应用自定义样式
+            this.imageGenerator.setStyle('custom');
+            this.imageGenerator.setCustomTheme({
+                bgColor: this.customBgColor,
+                textColor: this.customTextColor,
+                bgImage: this.customBgImage,
+                bgOpacity: this.customBgOpacity
+            });
+            
+            // 更新画布
+            this.updateCanvas();
+        });
+    }
+    
+    // 更新画布显示
+    updateCanvas() {
+        this.imageGenerator.updateCanvas().then(() => {
+            const canvasContainer = this.contentEl.querySelector('.canvas-container');
+            if (canvasContainer) {
+                canvasContainer.empty();
+                const canvas = this.imageGenerator.getCanvas();
+                canvasContainer.appendChild(canvas);
+            }
+        });
+    }
+    
+    // 显示自定义主题设置面板，修改为支持保存功能
+    private showCustomThemeSettings(container: HTMLElement, isEditing = false) {
+        // 移除现有的自定义主题设置面板
+        const existingCustomizer = container.querySelector('.theme-customizer');
+        if (existingCustomizer) {
+            existingCustomizer.remove();
+        }
+        
+        // 创建新的自定义主题设置面板
+        const customizer = container.createEl('div', { cls: 'theme-customizer' });
+        
+        // 样式名称输入
+        const nameContainer = customizer.createEl('div', { cls: 'color-picker-container' });
+        nameContainer.createEl('div', { 
+            cls: 'color-picker-label',
+            text: '样式名称'
+        });
+        
+        const nameInput = nameContainer.createEl('input', {
+            attr: {
+                type: 'text',
+                placeholder: '输入样式名称',
+                value: this.customStyleName
+            },
+            cls: 'color-picker-input'
+        });
+        
+        // 背景颜色选择器
+        const bgColorContainer = customizer.createEl('div', { cls: 'color-picker-container' });
+        bgColorContainer.createEl('div', { 
+            cls: 'color-picker-label',
+            text: '背景颜色'
+        });
+        
+        const bgColorInput = bgColorContainer.createEl('input', {
+            cls: 'color-picker-input',
+            attr: {
+                type: 'color',
+                value: this.customBgColor
+            }
+        });
+        
+        // 文字颜色选择器
+        const textColorContainer = customizer.createEl('div', { cls: 'color-picker-container' });
+        textColorContainer.createEl('div', { 
+            cls: 'color-picker-label',
+            text: '文字颜色'
+        });
+        
+        const textColorInput = textColorContainer.createEl('input', {
+            cls: 'color-picker-input',
+            attr: {
+                type: 'color',
+                value: this.customTextColor
+            }
+        });
+        
+        // 背景图片上传
+        const imageContainer = customizer.createEl('div', { cls: 'image-upload-container' });
+        imageContainer.createEl('div', { 
+            cls: 'color-picker-label',
+            text: '背景图片（可选）'
+        });
+        
+        const imageUploadBtn = imageContainer.createEl('label', {
+            cls: 'image-upload-button',
+            text: '选择图片'
+        });
+        
+        imageUploadBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                <polyline points="21 15 16 10 5 21"></polyline>
+            </svg>
+            <span>选择背景图片</span>
+        `;
+        
+        const imageInput = imageUploadBtn.createEl('input', {
+            attr: {
+                type: 'file',
+                accept: 'image/*',
+                style: 'display: none;'
+            }
+        });
+        
+        const imagePreview = imageContainer.createEl('img', {
+            cls: 'image-preview'
+        });
+        
+        if (this.customBgImage) {
+            imagePreview.src = this.customBgImage;
+            imagePreview.addClass('active');
+        }
+        
+        // 背景图片透明度滑块
+        const opacityContainer = customizer.createEl('div', { cls: 'opacity-slider-container' });
+        opacityContainer.createEl('div', { 
+            cls: 'color-picker-label',
+            text: `背景图片透明度: ${Math.round(this.customBgOpacity * 100)}%`
+        });
+        
+        const opacitySlider = opacityContainer.createEl('input', {
+            cls: 'opacity-slider',
+            attr: {
+                type: 'range',
+                min: '0',
+                max: '1',
+                step: '0.05',
+                value: String(this.customBgOpacity)
+            }
+        });
+        
+        // 按钮容器
+        const buttonsContainer = customizer.createEl('div', { cls: 'buttons-container' });
+        
+        // 保存按钮
+        const saveBtn = buttonsContainer.createEl('button', {
+            cls: 'elegant-button',
+            text: isEditing ? '更新样式' : '保存为新样式'
+        });
+        
+        // 取消按钮
+        const cancelBtn = buttonsContainer.createEl('button', {
+            cls: 'reset-button',
+            text: '取消'
+        });
+        
+        // 事件处理
+        nameInput.addEventListener('input', () => {
+            this.customStyleName = nameInput.value;
+        });
+        
+        bgColorInput.addEventListener('input', () => {
+            this.customBgColor = bgColorInput.value;
+            this.applyCustomTheme();
+        });
+        
+        textColorInput.addEventListener('input', () => {
+            this.customTextColor = textColorInput.value;
+            this.applyCustomTheme();
+        });
+        
+        imageInput.addEventListener('change', () => {
+            const file = imageInput.files?.[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.customBgImage = e.target?.result as string;
+                    imagePreview.src = this.customBgImage;
+                    imagePreview.addClass('active');
+                    this.applyCustomTheme();
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        opacitySlider.addEventListener('input', () => {
+            this.customBgOpacity = parseFloat(opacitySlider.value);
+            opacityContainer.querySelector('.color-picker-label')!.textContent = 
+                `背景图片透明度: ${Math.round(this.customBgOpacity * 100)}%`;
+            this.applyCustomTheme();
+        });
+        
+        // 保存按钮事件
+        saveBtn.addEventListener('click', async () => {
+            if (!this.customStyleName.trim()) {
+                alert('请输入样式名称');
+                return;
+            }
+            
+            const styleData: CustomStyle = {
+                id: this.editingStyleId || `custom-${Date.now()}`,
+                name: this.customStyleName,
+                description: '自定义背景和文字颜色',
+                bgColor: this.customBgColor,
+                textColor: this.customTextColor,
+                bgImage: this.customBgImage,
+                bgOpacity: this.customBgOpacity
+            };
+            
+            if (this.editingStyleId) {
+                // 更新现有样式
+                await this.plugin.updateCustomStyle(this.editingStyleId, styleData);
+            } else {
+                // 保存为新样式
+                await this.plugin.addCustomStyle(styleData);
+            }
+            
+            // 重新创建样式按钮
+            this.createStyleButtons(container);
+            
+            // 移除自定义主题设置面板
+            customizer.remove();
+        });
+        
+        // 取消按钮事件
+        cancelBtn.addEventListener('click', () => {
+            // 移除自定义主题设置面板
+            customizer.remove();
+            
+            // 如果是在编辑状态，重新加载原样式
+            if (this.editingStyleId) {
+                const style = this.plugin.getCustomStyles().find(s => s.id === this.editingStyleId);
+                if (style) {
+                    this.customBgColor = style.bgColor;
+                    this.customTextColor = style.textColor;
+                    this.customBgImage = style.bgImage;
+                    this.customBgOpacity = style.bgOpacity;
+                    this.applyCustomTheme();
+                }
+            }
+        });
+        
+        // 初始应用自定义主题
+        this.applyCustomTheme();
+    }
+    
+    // 应用自定义主题
+    private applyCustomTheme() {
+        // 更新图片生成器中的自定义主题设置
+        if (this.imageGenerator) {
+            this.imageGenerator.setCustomTheme({
+                bgColor: this.customBgColor,
+                textColor: this.customTextColor,
+                bgImage: this.customBgImage,
+                bgOpacity: this.customBgOpacity
+            });
+            
+            // 更新画布
+            this.imageGenerator.updateCanvas().then(() => {
+                const canvasContainer = this.contentEl.querySelector('.canvas-container');
+                if (canvasContainer) {
+                    canvasContainer.empty();
+                    const canvas = this.imageGenerator.getCanvas();
+                    canvasContainer.appendChild(canvas);
+                }
+            });
+        }
+    }
 }
 
 // 模板接口定义
@@ -752,8 +1278,19 @@ const SHARE_TEMPLATES: ShareTemplate[] = [
     }
 ];
 
-// Define the available markdown styles
-const MARKDOWN_STYLES = [
+// 添加自定义样式接口
+interface CustomStyle {
+    id: string;
+    name: string;
+    description: string;
+    bgColor: string;
+    textColor: string;
+    bgImage: string | null;
+    bgOpacity: number;
+}
+
+// 定义内置样式
+const BUILT_IN_STYLES = [
     {
         id: 'default',
         name: '默认样式',
@@ -772,7 +1309,12 @@ const MARKDOWN_STYLES = [
 ];
 
 export default class ImageSharePlugin extends Plugin {
+    private customStyles: CustomStyle[] = [];
+    
     async onload() {
+        // 加载保存的自定义样式
+        await this.loadCustomStyles();
+        
         // 注册编辑器右键菜单
         this.registerEvent(
             this.app.workspace.on('editor-menu', (menu: Menu, editor: Editor) => {
@@ -784,7 +1326,7 @@ export default class ImageSharePlugin extends Plugin {
                             .setTitle('Share as Image')
                             .setIcon('image')
                             .onClick(async () => {
-                                new TextPreviewModal(this.app, selectedText).open();
+                                new TextPreviewModal(this.app, selectedText, this).open();
                             });
                     });
                 }
@@ -798,10 +1340,61 @@ export default class ImageSharePlugin extends Plugin {
             editorCallback: (editor: Editor) => {
                 const selectedText = editor.getSelection();
                 if (selectedText) {
-                    new TextPreviewModal(this.app, selectedText).open();
+                    new TextPreviewModal(this.app, selectedText, this).open();
                 }
             }
         });
+    }
+    
+    // 加载自定义样式
+    async loadCustomStyles() {
+        const savedStyles = await this.loadData();
+        if (savedStyles && Array.isArray(savedStyles)) {
+            this.customStyles = savedStyles;
+        }
+    }
+    
+    // 保存自定义样式
+    async saveCustomStyles() {
+        await this.saveData(this.customStyles);
+    }
+    
+    // 获取自定义样式列表
+    getCustomStyles(): CustomStyle[] {
+        return this.customStyles;
+    }
+    
+    // 添加新的自定义样式
+    async addCustomStyle(style: CustomStyle) {
+        // 确保ID唯一
+        if (!style.id) {
+            style.id = `custom-${Date.now()}`;
+        }
+        this.customStyles.push(style);
+        await this.saveCustomStyles();
+        return style.id;
+    }
+    
+    // 更新现有自定义样式
+    async updateCustomStyle(styleId: string, updates: Partial<CustomStyle>) {
+        const index = this.customStyles.findIndex(s => s.id === styleId);
+        if (index > -1) {
+            this.customStyles[index] = { ...this.customStyles[index], ...updates };
+            await this.saveCustomStyles();
+            return true;
+        }
+        return false;
+    }
+    
+    // 删除自定义样式
+    async deleteCustomStyle(styleId: string) {
+        const index = this.customStyles.findIndex(s => s.id === styleId);
+        if (index > -1) {
+            this.customStyles.splice(index, 1);
+            await this.saveCustomStyles();
+            return true;
+        }
+        return false;
     }
 
     onunload() {
