@@ -6,19 +6,20 @@ available in the app when your plugin is enabled.
 If your plugin does not need CSS, delete this file.
 
 */
-.modal {
+ /* .image-share-modal .modal { */
     /* 移除固定宽高 */
     /* width: 1500px; */
     /* height: 300px; */
-    max-width: 90vw;      /* 限制最大宽度为视窗宽度的90% */
-    max-height: 90vh;     /* 限制最大高度为视窗高度的90% */
-    display: flex;        /* 使用flex布局使内容居中 */
-    flex-direction: column;
-    min-width: 400px;     /* 设置最小宽度 */
-    transition: width 0.3s ease, height 0.3s ease;  /* 平滑过渡效果 */
-    background-color: #121212;
-    border-radius: 0;
-}
+    /* max-width: 90vw;      /* 限制最大宽度为视窗宽度的90% */
+    /* max-height: 90vh;     限制最大高度为视窗高度的90% */
+    /* display: flex;        /* 使用flex布局使内容居中 */
+    /* flex-direction: column; */
+    /* min-width: 400px;     /* 设置最小宽度 */
+    /* transition: width 0.3s ease, height 0.3s ease;  /* 平滑过渡效果 */
+    /* background-color: #121212; */
+    /* border-radius: 0; */
+ /* } */
+
 
 
 .image-share-modal {

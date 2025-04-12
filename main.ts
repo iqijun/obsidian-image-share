@@ -39,13 +39,16 @@ class ImageGenerator {
             // 添加内容容器
             const contentDiv = tempDiv.createDiv({ cls: 'markdown-preview-sizer' });
             
+            // Create a component that we can unload later to prevent memory leaks
+            const component = new Component();
+            
             // 渲染 Markdown
             await MarkdownRenderer.render(
                 this.app,
                 this.text,
                 contentDiv,
                 '',
-                new Component()
+                component
             );
 
             document.body.appendChild(tempDiv);
@@ -96,6 +99,9 @@ class ImageGenerator {
 
             // 清理临时元素
             document.body.removeChild(tempDiv);
+            
+            // Unload the component to prevent memory leaks
+            component.unload();
         } catch (error) {
             console.error('Error rendering markdown:', error);
         }
@@ -178,11 +184,18 @@ class ImageGenerator {
 class TextPreviewModal extends Modal {
     private text: string;
     private imageGenerator: ImageGenerator;
+    private buttonCleanups: (() => void)[] = [];
 
     constructor(app: App, text: string) {
         super(app);
         this.text = text;
         this.imageGenerator = new ImageGenerator(app, text);
+    }
+    
+    // Helper method to add event listeners that will be cleaned up on close
+    private addCleanableListener(element: HTMLElement, event: string, handler: (e: Event) => void): void {
+        element.addEventListener(event, handler);
+        this.buttonCleanups.push(() => element.removeEventListener(event, handler));
     }
 
     async onOpen() {
@@ -455,7 +468,8 @@ class TextPreviewModal extends Modal {
             templateText.textContent = template.name;
             templateButton.appendChild(templateText);
             
-            templateButton.onclick = async () => {
+            // Use our helper method to add a cleanable event listener
+            const templateClickHandler = async () => {
                 templateSelector.findAll('.template-button').forEach(btn => 
                     btn.removeClass('active')
                 );
@@ -478,6 +492,9 @@ class TextPreviewModal extends Modal {
                 // 当模板变更时更新弹出框尺寸
                 adjustModalSize(newCanvas.width, newCanvas.height);
             };
+            
+            this.addCleanableListener(templateButton, 'click', templateClickHandler);
+            
             if (template.id === 'default') {
                 templateButton.addClass('active');
             }
@@ -513,8 +530,8 @@ class TextPreviewModal extends Modal {
                 styleButton.classList.add('active');
             }
             
-            // 添加点击事件
-            styleButton.addEventListener('click', async () => {
+            // 添加点击事件，使用我们的辅助方法添加可清理的事件监听器
+            const styleClickHandler = async () => {
                 // 移除所有活动状态
                 styleSelector.findAll('.style-button').forEach(btn => 
                     btn.removeClass('active')
@@ -542,7 +559,9 @@ class TextPreviewModal extends Modal {
                 
                 // 更新模态框大小
                 adjustModalSize(newCanvas.width, newCanvas.height);
-            });
+            };
+            
+            this.addCleanableListener(styleButton, 'click', styleClickHandler);
         });
         
         // 等待初始画布渲染完成
@@ -554,7 +573,7 @@ class TextPreviewModal extends Modal {
         adjustModalSize(canvas.width, canvas.height);
 
         // 添加复制按钮点击事件
-        copyButton.addEventListener('click', async () => {
+        const copyClickHandler = async () => {
             copyButton.classList.add('clicked');
             
             const success = await this.imageGenerator.copyToClipboard();
@@ -637,10 +656,12 @@ class TextPreviewModal extends Modal {
             };
             
             createToast(success, success ? '已复制到剪贴板' : '复制失败');
-        });
+        };
+        
+        this.addCleanableListener(copyButton, 'click', copyClickHandler);
         
         // 添加下载按钮点击事件
-        downloadButton.addEventListener('click', () => {
+        const downloadClickHandler = () => {
             downloadButton.classList.add('clicked');
             
             // 生成下载
@@ -727,14 +748,36 @@ class TextPreviewModal extends Modal {
             };
             
             createToast(true, '已开始下载');
-        });
+        };
+        
+        this.addCleanableListener(downloadButton, 'click', downloadClickHandler);
         
         this.contentEl.addClass('text-preview-modal');
     }
 
     onClose() {
         const {contentEl} = this;
+        
+        // Clean up all event listeners
+        this.buttonCleanups.forEach(cleanup => cleanup());
+        this.buttonCleanups = [];
+        
+        // Empty the content element
         contentEl.empty();
+        
+        // Create a dummy canvas to replace any references to the current canvas
+        // This helps with garbage collection
+        const dummyCanvas = document.createElement('canvas');
+        
+        // Replace the canvas in the imageGenerator to help garbage collection
+        if (this.imageGenerator) {
+            // @ts-ignore - We're directly accessing the private canvas property for cleanup
+            this.imageGenerator.canvas = dummyCanvas;
+        }
+        
+        // Allow this instance to be garbage collected
+        // @ts-ignore - We know this is not strictly correct, but it's for cleanup purposes
+        this.imageGenerator = undefined;
     }
 }
 
