@@ -6,19 +6,7 @@ available in the app when your plugin is enabled.
 If your plugin does not need CSS, delete this file.
 
 */
-.modal {
-    /* 移除固定宽高 */
-    /* width: 1500px; */
-    /* height: 300px; */
-    max-width: 90vw;      /* 限制最大宽度为视窗宽度的90% */
-    max-height: 90vh;     /* 限制最大高度为视窗高度的90% */
-    display: flex;        /* 使用flex布局使内容居中 */
-    flex-direction: column;
-    min-width: 400px;     /* 设置最小宽度 */
-    transition: width 0.3s ease, height 0.3s ease;  /* 平滑过渡效果 */
-    background-color: #121212;
-    border-radius: 0;
-}
+
 
 
 .image-share-modal {
@@ -1721,4 +1709,55 @@ If your plugin does not need CSS, delete this file.
 .color-picker-input[type="text"]:focus {
     outline: none;
     box-shadow: 0 0 0 2px rgba(124, 94, 242, 0.4);
+}
+
+.custom-css-container {
+    margin-bottom: 16px;
+}
+
+.custom-css-textarea {
+    width: 100%;
+    min-height: 120px;
+    max-height: 300px;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: #2c2c2c;
+    color: #e0e0e0;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 13px;
+    line-height: 1.4;
+    resize: vertical;
+    tab-size: 2;
+    white-space: pre;
+    overflow-wrap: normal;
+    overflow-x: auto;
+}
+
+.custom-css-textarea:focus {
+    border-color: rgba(255, 255, 255, 0.3);
+    outline: none;
+}
+
+.custom-css-help {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #888;
+    line-height: 1.4;
+}
+
+/* 语法高亮效果 */
+.custom-css-textarea::selection {
+    background-color: rgba(100, 100, 255, 0.3);
+}
+
+/* CSS预览提示 */
+.css-preview-hint {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background-color: rgba(100, 100, 255, 0.1);
+    border-left: 3px solid rgba(100, 100, 255, 0.5);
+    font-size: 12px;
+    color: #ccc;
+    border-radius: 0 4px 4px 0;
 }

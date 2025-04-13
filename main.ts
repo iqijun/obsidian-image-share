@@ -14,7 +14,8 @@ class ImageGenerator {
         bgColor: '#ffffff',
         textColor: '#333333',
         bgImage: null as string | null,
-        bgOpacity: 0.15
+        bgOpacity: 0.15,
+        customCSS: '' // 添加自定义CSS字段
     };
 
     constructor(app: App, text: string) {
@@ -56,6 +57,17 @@ class ImageGenerator {
                             clonedDiv.classList.remove('markdown-style-default', 'markdown-style-modern', 'markdown-style-minimal', 'markdown-style-custom');
                             clonedDiv.classList.add('markdown-style-base');
                             clonedDiv.classList.add(`markdown-style-${this.currentStyle}`);
+                        }
+                        
+                        // 如果是自定义样式，确保在克隆文档中也应用自定义CSS
+                        if (this.currentStyle === 'custom' && this.customTheme.customCSS) {
+                            // 创建样式元素并添加到克隆文档的head中
+                            const styleEl = clonedDoc.createElement('style');
+                            styleEl.textContent = this.customTheme.customCSS;
+                            styleEl.id = 'cloned-custom-markdown-style';
+                            clonedDoc.head.appendChild(styleEl);
+                            
+                            console.log("在克隆文档中应用自定义CSS");
                         }
                     }
                 }
@@ -151,9 +163,13 @@ class ImageGenerator {
         bgColor: string,
         textColor: string,
         bgImage: string | null,
-        bgOpacity: number
+        bgOpacity: number,
+        customCSS?: string
     }) {
-        this.customTheme = { ...theme };
+        this.customTheme = { 
+            ...this.customTheme,
+            ...theme 
+        };
     }
     
     // 修复自定义主题渲染逻辑
@@ -172,6 +188,29 @@ class ImageGenerator {
                 tempDiv.classList.add(`markdown-style-${this.currentStyle}`);
             } else {
                 tempDiv.classList.add('markdown-style-custom');
+
+                // 如果有自定义CSS，添加到页面
+                if (this.customTheme.customCSS) {
+                    // 创建一个样式元素
+                    const styleEl = document.createElement('style');
+                    styleEl.textContent = this.customTheme.customCSS;
+                    styleEl.id = 'custom-markdown-style';
+                    
+                    // 移除现有的样式元素（如果存在）
+                    const existingStyle = document.getElementById('custom-markdown-style');
+                    if (existingStyle) {
+                        existingStyle.remove();
+                    }
+                    
+                    // 添加到文档头
+                    document.head.appendChild(styleEl);
+                    
+                    // 记住样式元素，以便在不需要时移除
+                    tempDiv.dataset.hasCustomStyle = 'true';
+                    
+                    // 记录应用的CSS以便调试
+                    console.log("应用自定义CSS:", this.customTheme.customCSS);
+                }
             }
             
             // 设置模板宽度
@@ -198,34 +237,26 @@ class ImageGenerator {
             // 如果是自定义样式，包装在自定义容器中
             if (this.currentStyle === 'custom') {
                 // 保存原始内容
-                const originalContent = tempDiv.innerHTML;
+                const originalContent = contentDiv.innerHTML;
+                contentDiv.empty();
                 
                 // 创建自定义背景容器
-                const customContainer = document.createElement('div');
-                customContainer.className = 'custom-background-container';
+                const customContainer = contentDiv.createDiv({ cls: 'custom-background-container' });
                 customContainer.style.setProperty('--custom-bg-color', this.customTheme.bgColor);
                 customContainer.style.setProperty('--custom-text-color', this.customTheme.textColor);
+                customContainer.style.setProperty('--custom-bg-opacity', String(this.customTheme.bgOpacity));
                 
-                // 如果有背景图片，添加背景图片
+                // 如果有背景图片，添加它
                 if (this.customTheme.bgImage) {
-                    const bgImage = document.createElement('img');
-                    bgImage.className = 'custom-background-image';
+                    const bgImage = customContainer.createEl('img', { cls: 'custom-background-image' });
                     bgImage.src = this.customTheme.bgImage;
-                    bgImage.style.setProperty('--custom-bg-opacity', String(this.customTheme.bgOpacity));
-                    customContainer.appendChild(bgImage);
                 }
                 
-                // 创建内容包装器并将原始内容放入
-                const contentWrapper = document.createElement('div');
-                contentWrapper.className = 'custom-content-wrapper';
+                // 创建内容包装器并应用自定义样式
+                const contentWrapper = customContainer.createDiv({ cls: 'custom-content-wrapper' });
+                contentWrapper.style.position = 'relative';
+                contentWrapper.style.zIndex = '1';
                 contentWrapper.innerHTML = originalContent;
-                
-                // 将内容包装器添加到自定义容器
-                customContainer.appendChild(contentWrapper);
-                
-                // 清空原容器并添加自定义容器
-                tempDiv.innerHTML = '';
-                tempDiv.appendChild(customContainer);
             }
             
             // 添加到文档以便渲染
@@ -236,9 +267,17 @@ class ImageGenerator {
             const minHeight = 200;
             const finalHeight = Math.max(actualHeight, minHeight);
             
+            // 清理临时添加的样式表
+            if (tempDiv.dataset.hasCustomStyle) {
+                const customStyle = document.getElementById('custom-markdown-style');
+                if (customStyle) {
+                    customStyle.remove();
+                }
+            }
+            
             return { tempDiv, finalHeight };
         } catch (error) {
-            console.error('Error in renderMarkdown:', error);
+            console.error('Error rendering markdown:', error);
             throw error;
         }
     }
@@ -253,6 +292,7 @@ class TextPreviewModal extends Modal {
     private customBgImage: string | null = null;
     private customBgOpacity = 0.15;
     private customStyleName = '未命名样式';
+    private customCSS = '';
     private editingStyleId: string | null = null;
 
     constructor(app: App, text: string, plugin: ImageSharePlugin) {
@@ -901,6 +941,9 @@ class TextPreviewModal extends Modal {
             this.customTextColor = style.textColor;
             this.customBgImage = style.bgImage;
             this.customBgOpacity = style.bgOpacity;
+            this.customCSS = style.customCSS || ''; // 设置自定义CSS
+            
+            console.log("点击自定义样式按钮，设置自定义CSS:", this.customCSS); // 调试日志
             
             // 应用自定义样式
             await this.imageGenerator.setStyle('custom');
@@ -908,7 +951,8 @@ class TextPreviewModal extends Modal {
                 bgColor: style.bgColor,
                 textColor: style.textColor,
                 bgImage: style.bgImage,
-                bgOpacity: style.bgOpacity
+                bgOpacity: style.bgOpacity,
+                customCSS: style.customCSS // 设置自定义CSS
             });
             
             // 隐藏自定义主题设置面板
@@ -932,6 +976,9 @@ class TextPreviewModal extends Modal {
             this.customBgImage = style.bgImage;
             this.customBgOpacity = style.bgOpacity;
             this.customStyleName = style.name;
+            this.customCSS = style.customCSS || ''; // 确保设置 customCSS
+            
+            console.log("编辑样式，加载CSS:", this.customCSS); // 调试日志
             
             // 先移除所有现有的主题设置面板
             document.querySelectorAll('.theme-customizer').forEach(el => el.remove());
@@ -1062,7 +1109,10 @@ class TextPreviewModal extends Modal {
             this.customBgImage = null;
             this.customBgOpacity = 0.15;
             this.customStyleName = '未命名样式';
+            this.customCSS = ''; // 重置自定义CSS
             this.editingStyleId = null;
+            
+            console.log("创建新样式，重置CSS"); // 调试日志
             
             // 显示自定义主题设置面板
             this.showCustomThemeSettings(container, false);
@@ -1073,7 +1123,8 @@ class TextPreviewModal extends Modal {
                 bgColor: this.customBgColor,
                 textColor: this.customTextColor,
                 bgImage: this.customBgImage,
-                bgOpacity: this.customBgOpacity
+                bgOpacity: this.customBgOpacity,
+                customCSS: this.customCSS // 设置空的CSS
             });
             
             // 更新画布
@@ -1222,6 +1273,26 @@ class TextPreviewModal extends Modal {
             }
         });
         
+        // 添加自定义CSS编辑器
+        const cssContainer = customizer.createEl('div', { cls: 'custom-css-container' });
+        cssContainer.createEl('div', { 
+            cls: 'color-picker-label',
+            text: '自定义CSS（可选）'
+        });
+        
+        console.log("显示CSS编辑器，当前CSS值:", this.customCSS); // 调试日志
+        
+        const cssTextarea = cssContainer.createEl('textarea', {
+            cls: 'custom-css-textarea',
+            attr: {
+                placeholder: '输入自定义CSS代码来控制Markdown内容展示\n例如：\n.markdown-style-custom h1 {\n  color: red;\n  border-bottom: 2px solid #ddd;\n}',
+                rows: '8'
+            }
+        });
+        
+        // 直接设置值，避免可能的属性设置问题
+        cssTextarea.value = this.customCSS || '';
+        
         // 按钮容器
         const buttonsContainer = customizer.createEl('div', { cls: 'buttons-container' });
         buttonsContainer.style.marginTop = '20px';
@@ -1253,6 +1324,11 @@ class TextPreviewModal extends Modal {
         
         textColorInput.addEventListener('input', () => {
             this.customTextColor = textColorInput.value;
+            this.applyCustomTheme();
+        });
+        
+        cssTextarea.addEventListener('input', () => {
+            this.customCSS = cssTextarea.value;
             this.applyCustomTheme();
         });
         
@@ -1291,22 +1367,56 @@ class TextPreviewModal extends Modal {
                 bgColor: this.customBgColor,
                 textColor: this.customTextColor,
                 bgImage: this.customBgImage,
-                bgOpacity: this.customBgOpacity
+                bgOpacity: this.customBgOpacity,
+                customCSS: this.customCSS // 保存自定义CSS
             };
             
+            console.log("保存样式数据:", JSON.stringify({
+                ...styleData,
+                bgImage: styleData.bgImage ? "有图片" : "无图片"
+            }, null, 2)); // 调试日志
+            
             if (this.editingStyleId) {
-                // 更新现有样式
                 await this.plugin.updateCustomStyle(this.editingStyleId, styleData);
+                
+                // 显示成功提示
+                const toastMessage = document.createElement('div');
+                toastMessage.className = 'download-toast success';
+                toastMessage.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg><span>样式已更新</span>';
+                document.body.appendChild(toastMessage);
+                
+                setTimeout(() => {
+                    toastMessage.classList.add('hide');
+                    setTimeout(() => {
+                        document.body.removeChild(toastMessage);
+                    }, 300);
+                }, 2000);
             } else {
-                // 保存为新样式
+                // 添加新样式
                 await this.plugin.addCustomStyle(styleData);
+                
+                // 显示成功提示
+                const toastMessage = document.createElement('div');
+                toastMessage.className = 'download-toast success';
+                toastMessage.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg><span>新样式已保存</span>';
+                document.body.appendChild(toastMessage);
+                
+                setTimeout(() => {
+                    toastMessage.classList.add('hide');
+                    setTimeout(() => {
+                        document.body.removeChild(toastMessage);
+                    }, 300);
+                }, 2000);
             }
+            
+            // 移除自定义主题设置面板
+            customizer.remove();
             
             // 重新创建样式按钮
             this.createStyleButtons(container);
             
-            // 移除自定义主题设置面板
-            customizer.remove();
+            // 清除编辑状态
+            this.editingStyleId = null;
         });
         
         // 取消按钮事件
@@ -1344,7 +1454,8 @@ class TextPreviewModal extends Modal {
                 bgColor: this.customBgColor,
                 textColor: this.customTextColor,
                 bgImage: this.customBgImage,
-                bgOpacity: this.customBgOpacity
+                bgOpacity: this.customBgOpacity,
+                customCSS: this.customCSS // 添加自定义CSS
             });
             
             // 更新画布
@@ -1393,6 +1504,7 @@ interface CustomStyle {
     textColor: string;
     bgImage: string | null;
     bgOpacity: number;
+    customCSS?: string;
 }
 
 // 定义内置样式
