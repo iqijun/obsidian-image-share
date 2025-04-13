@@ -919,14 +919,11 @@ If your plugin does not need CSS, delete this file.
     padding: 24px;
 }
 
-/* Width classes for different templates */
-.template-width-800 {
-    width: 800px;
-}
+/* Common template widths that are used frequently */
+.template-width-760 { width: 760px; }
+.template-width-800 { width: 800px; }
 
-.template-width-760 {
-    width: 760px; /* 800px - 40px padding */
-}
+/* We now use dynamic style elements for other dimensions */
 
 /* Dynamic height class that will be set via CSS custom property */
 .dynamic-height {
@@ -935,7 +932,6 @@ If your plugin does not need CSS, delete this file.
 
 /* Temporary div styles */
 .temp-div {
-    width: var(--template-width);
     padding: 24px;
     box-sizing: border-box;
 }
@@ -948,10 +944,9 @@ If your plugin does not need CSS, delete this file.
     margin-top: 4px;
 }
 
-/* Modal sizing classes */
+/* Modal sizing classes - basic styling */
 .modal-size {
-    width: var(--modal-width);
-    height: var(--modal-height);
+    /* The specific dimensions will be set using dynamic style elements */
 }
 
 /* 移除缩放控制样式 */

@@ -27,8 +27,26 @@ class ImageGenerator {
             tempDiv.classList.add('markdown-style-base');
             tempDiv.classList.add(`markdown-style-${this.currentStyle}`);
             
-            // Set template width via CSS custom property
-            tempDiv.style.setProperty('--template-width', `${this.currentTemplate.width}px`);
+            // Use fixed-width classes where possible
+            tempDiv.classList.add(`template-width-${this.currentTemplate.width}`);
+            
+            // For non-standard widths, use a dynamic style element
+            if (!document.querySelector(`.template-width-${this.currentTemplate.width}`)) {
+                let styleElement = document.getElementById('template-dynamic-styles');
+                if (!styleElement) {
+                    styleElement = document.createElement('style');
+                    styleElement.id = 'template-dynamic-styles';
+                    document.head.appendChild(styleElement);
+                }
+                
+                // Add a style rule for this specific width
+                styleElement.textContent += `
+                    .template-width-${this.currentTemplate.width} {
+                        width: ${this.currentTemplate.width}px;
+                    }
+                `;
+            }
+            
             tempDiv.classList.add('temp-div');
 
             // 添加日期
@@ -74,10 +92,22 @@ class ImageGenerator {
                 onclone: (clonedDoc) => {
                     const clonedDiv = clonedDoc.querySelector('.markdown-preview-view') as HTMLElement;
                     if (clonedDiv) {
-                        // Set width and height via CSS classes and custom properties
+                        // Set width and height via CSS classes
                         clonedDiv.classList.add('cloned-preview-container');
                         clonedDiv.classList.add(`template-width-${this.currentTemplate.width - 40}`);
-                        clonedDiv.style.setProperty('--content-height', `${finalHeight}px`);
+                        
+                        // Create a custom height class if needed
+                        if (!clonedDoc.querySelector(`.content-height-${finalHeight}`)) {
+                            const styleElement = clonedDoc.createElement('style');
+                            styleElement.textContent = `
+                                .content-height-${finalHeight} {
+                                    height: ${finalHeight}px;
+                                }
+                            `;
+                            clonedDoc.head.appendChild(styleElement);
+                        }
+                        
+                        clonedDiv.classList.add(`content-height-${finalHeight}`);
                         clonedDiv.classList.add('dynamic-height');
                         clonedDiv.classList.add('enhanced-text-rendering');
                         
@@ -219,13 +249,28 @@ class TextPreviewModal extends Modal {
             const finalWidth = Math.min(width + 300, maxWidth); // 300px 是左侧面板宽度
             const finalHeight = Math.min(height + 80, maxHeight); // 添加额外的高度用于顶部和底部
             
-            // Use CSS custom properties for dynamic sizing
-            modalElement.style.setProperty('--modal-width', `${finalWidth}px`);
-            modalElement.style.setProperty('--modal-height', `${finalHeight}px`);
+            // Add classes for styling
             modalElement.classList.add('modal-size');
-            
-            // 添加flex布局
             modalElement.classList.add('modal-layout');
+            
+            // Set CSS variables through a dynamically created style element
+            let styleElement = document.getElementById('modal-dynamic-styles');
+            if (!styleElement) {
+                styleElement = document.createElement('style');
+                styleElement.id = 'modal-dynamic-styles';
+                document.head.appendChild(styleElement);
+            }
+            
+            // Update style rules for this specific modal
+            const modalId = `modal-${Date.now()}`;
+            modalElement.id = modalId;
+            
+            styleElement.textContent = `
+                #${modalId}.modal-size {
+                    width: ${finalWidth}px;
+                    height: ${finalHeight}px;
+                }
+            `;
             
             // 调整内容区域
             contentEl.classList.add('modal-content-layout');
