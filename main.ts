@@ -797,7 +797,6 @@ class TextPreviewModal extends Modal {
         // 创建内容容器
         const contentEl = styleButton.createEl('div', { cls: 'style-button-content' });
         contentEl.createEl('span', { text: style.name });
-        contentEl.createEl('span', { text: style.description, cls: 'style-description' });
         
         // 设置当前活动样式
         if (style.id === this.imageGenerator.getCurrentStyle()) {
@@ -856,7 +855,6 @@ class TextPreviewModal extends Modal {
         // 创建内容容器
         const contentEl = styleButton.createEl('div', { cls: 'style-button-content' });
         contentEl.createEl('span', { text: style.name });
-        contentEl.createEl('span', { text: style.description, cls: 'style-description' });
         
         // 创建操作按钮容器
         const actionsEl = styleButton.createEl('div', { cls: 'style-button-actions' });
@@ -926,12 +924,17 @@ class TextPreviewModal extends Modal {
         // 编辑按钮事件
         editBtn.addEventListener('click', (e) => {
             e.stopPropagation();
+            e.preventDefault();
+            
             this.editingStyleId = style.id;
             this.customBgColor = style.bgColor;
             this.customTextColor = style.textColor;
             this.customBgImage = style.bgImage;
             this.customBgOpacity = style.bgOpacity;
             this.customStyleName = style.name;
+            
+            // 先移除所有现有的主题设置面板
+            document.querySelectorAll('.theme-customizer').forEach(el => el.remove());
             
             // 显示编辑面板
             this.showCustomThemeSettings(container, true);
@@ -941,8 +944,80 @@ class TextPreviewModal extends Modal {
         deleteBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
             
-            // 确认删除
-            if (confirm(`确定要删除样式 "${style.name}" 吗？`)) {
+            // 创建自定义确认对话框
+            const confirmDialog = document.createElement('div');
+            confirmDialog.className = 'delete-confirmation-dialog';
+            confirmDialog.style.position = 'fixed';
+            confirmDialog.style.top = '0';
+            confirmDialog.style.left = '0';
+            confirmDialog.style.width = '100%';
+            confirmDialog.style.height = '100%';
+            confirmDialog.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+            confirmDialog.style.zIndex = '1000';
+            confirmDialog.style.display = 'flex';
+            confirmDialog.style.justifyContent = 'center';
+            confirmDialog.style.alignItems = 'center';
+            
+            const dialogContent = document.createElement('div');
+            dialogContent.style.backgroundColor = '#1e1e1e';
+            dialogContent.style.padding = '24px';
+            dialogContent.style.borderRadius = '12px';
+            dialogContent.style.width = '320px';
+            dialogContent.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)';
+            
+            const title = document.createElement('h2');
+            title.textContent = '确认删除';
+            title.style.margin = '0 0 16px 0';
+            title.style.color = '#e0e0e0';
+            title.style.fontSize = '18px';
+            
+            const message = document.createElement('p');
+            message.textContent = `确定要删除样式 "${style.name}" 吗？此操作无法撤销。`;
+            message.style.margin = '0 0 20px 0';
+            message.style.color = '#b0b0b0';
+            message.style.lineHeight = '1.5';
+            
+            const buttonContainer = document.createElement('div');
+            buttonContainer.style.display = 'flex';
+            buttonContainer.style.justifyContent = 'flex-end';
+            buttonContainer.style.gap = '12px';
+            
+            const cancelButton = document.createElement('button');
+            cancelButton.textContent = '取消';
+            cancelButton.style.padding = '8px 16px';
+            cancelButton.style.backgroundColor = 'transparent';
+            cancelButton.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+            cancelButton.style.borderRadius = '6px';
+            cancelButton.style.color = '#e0e0e0';
+            cancelButton.style.cursor = 'pointer';
+            
+            const confirmButton = document.createElement('button');
+            confirmButton.textContent = '删除';
+            confirmButton.style.padding = '8px 16px';
+            confirmButton.style.backgroundColor = '#e53935';
+            confirmButton.style.border = 'none';
+            confirmButton.style.borderRadius = '6px';
+            confirmButton.style.color = 'white';
+            confirmButton.style.cursor = 'pointer';
+            
+            buttonContainer.appendChild(cancelButton);
+            buttonContainer.appendChild(confirmButton);
+            
+            dialogContent.appendChild(title);
+            dialogContent.appendChild(message);
+            dialogContent.appendChild(buttonContainer);
+            
+            confirmDialog.appendChild(dialogContent);
+            document.body.appendChild(confirmDialog);
+            
+            // 点击取消按钮关闭对话框
+            cancelButton.addEventListener('click', () => {
+                document.body.removeChild(confirmDialog);
+            });
+            
+            // 点击确认按钮执行删除
+            confirmButton.addEventListener('click', async () => {
+                document.body.removeChild(confirmDialog);
                 await this.plugin.deleteCustomStyle(style.id);
                 
                 // 重新创建样式按钮
@@ -953,7 +1028,14 @@ class TextPreviewModal extends Modal {
                     await this.imageGenerator.setStyle('default');
                     this.updateCanvas();
                 }
-            }
+            });
+            
+            // 点击对话框外部关闭对话框
+            confirmDialog.addEventListener('click', (event) => {
+                if (event.target === confirmDialog) {
+                    document.body.removeChild(confirmDialog);
+                }
+            });
         });
     }
     
@@ -971,7 +1053,6 @@ class TextPreviewModal extends Modal {
         // 创建内容容器
         const contentEl = newStyleButton.createEl('div', { cls: 'style-button-content' });
         contentEl.createEl('span', { text: '创建新样式' });
-        contentEl.createEl('span', { text: '自定义背景颜色或背景图片，创建专属风格', cls: 'style-description' });
         
         // 添加点击事件
         newStyleButton.addEventListener('click', () => {
@@ -1015,13 +1096,29 @@ class TextPreviewModal extends Modal {
     // 显示自定义主题设置面板，修改为支持保存功能
     private showCustomThemeSettings(container: HTMLElement, isEditing = false) {
         // 移除现有的自定义主题设置面板
-        const existingCustomizer = container.querySelector('.theme-customizer');
+        const existingCustomizer = document.querySelector('.theme-customizer');
         if (existingCustomizer) {
             existingCustomizer.remove();
         }
         
         // 创建新的自定义主题设置面板
         const customizer = container.createEl('div', { cls: 'theme-customizer' });
+        customizer.style.marginTop = '10px';
+        customizer.style.padding = '15px';
+        customizer.style.backgroundColor = '#212121';
+        customizer.style.borderRadius = '8px';
+        customizer.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+        
+        // 添加标题
+        const titleEl = customizer.createEl('h3', { 
+            text: isEditing ? '编辑样式' : '创建新样式',
+            cls: 'customizer-title'
+        });
+        titleEl.style.margin = '0 0 15px 0';
+        titleEl.style.padding = '0 0 10px 0';
+        titleEl.style.borderBottom = '1px solid rgba(255, 255, 255, 0.1)';
+        titleEl.style.fontSize = '16px';
+        titleEl.style.fontWeight = '500';
         
         // 样式名称输入
         const nameContainer = customizer.createEl('div', { cls: 'color-picker-container' });
@@ -1127,6 +1224,10 @@ class TextPreviewModal extends Modal {
         
         // 按钮容器
         const buttonsContainer = customizer.createEl('div', { cls: 'buttons-container' });
+        buttonsContainer.style.marginTop = '20px';
+        buttonsContainer.style.display = 'flex';
+        buttonsContainer.style.justifyContent = 'flex-end';
+        buttonsContainer.style.gap = '10px';
         
         // 保存按钮
         const saveBtn = buttonsContainer.createEl('button', {
@@ -1228,6 +1329,11 @@ class TextPreviewModal extends Modal {
         
         // 初始应用自定义主题
         this.applyCustomTheme();
+        
+        // 确保编辑面板可见
+        setTimeout(() => {
+            customizer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
     }
     
     // 应用自定义主题
