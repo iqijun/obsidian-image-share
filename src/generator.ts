@@ -32,6 +32,11 @@ export class ImageGenerator {
 			tempDiv.classList.add(`markdown-style-${this.currentStyle}`);
 			tempDiv.classList.add(`template-width-${this.currentTemplate.width}`);
 			tempDiv.classList.add('temp-div');
+			tempDiv.style.width = `${this.currentTemplate.width}px`;
+			tempDiv.style.position = 'fixed';
+			tempDiv.style.left = '-9999px';
+			tempDiv.style.top = '0';
+			tempDiv.style.zIndex = '-1000';
 
 			// For non-standard widths, use a dynamic style element
 			if (!document.querySelector(`.template-width-${this.currentTemplate.width}`)) {
@@ -75,12 +80,12 @@ export class ImageGenerator {
 			const minHeight = 200;
 			const finalHeight = Math.max(actualHeight, minHeight);
 
-			// 增加像素密度和图像质量
+			// 增加像素密度和图像质量 (固定 2x 清晰度，兼顾移动端性能)
 			const renderedCanvas = await html2canvas(tempDiv, {
 				width: this.currentTemplate.width,
 				height: finalHeight,
 				backgroundColor: this.currentTemplate.id === 'dark' ? '#1f2430' : '#fafbfd',
-				scale: window.devicePixelRatio * 2,
+				scale: 2,
 				windowWidth: this.currentTemplate.width,
 				windowHeight: finalHeight,
 				logging: false,

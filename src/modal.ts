@@ -6,7 +6,7 @@ import { createIcon } from './icons';
 import { showToast } from './toast';
 import { t } from './i18n';
 
-/** Modern preview dialog: settings rail on the left, live canvas preview on the right. */
+/** Modern preview dialog: responsive layout for desktop (two-column) and mobile (preview + bottom controls). */
 export class TextPreviewModal extends Modal {
 	private readonly text: string;
 	private imageGenerator: ImageGenerator;
@@ -31,37 +31,43 @@ export class TextPreviewModal extends Modal {
 	}
 
 	async onOpen() {
-		const { contentEl } = this;
+		const { contentEl, modalEl } = this;
 		contentEl.empty();
-		contentEl.addClass('image-share-modal', 'text-preview-modal');
 
-		this.modalEl.addClass('modal-layout');
-		contentEl.addClass('modal-content-layout');
+		// 给外层弹窗和内层内容容器添加专属类名
+		modalEl.addClass('image-share-modal-window');
+		contentEl.addClass('image-share-modal-content');
 
 		const container = contentEl.createDiv({ cls: 'share-container' });
 
-		// ---------- 左侧控制面板 ----------
+		// ---------- 控制面板 (桌面在左，移动端在下) ----------
 		const controlsPanel = container.createDiv({ cls: 'controls-panel' });
 
-		// 面板标题
+		// 面板标题 (桌面端显示)
 		controlsPanel.createDiv({
 			text: t('panel.imageSettings'),
-			cls: 'panel-title'
+			cls: 'panel-title desktop-only-title'
 		});
 
-		// ---------- 主题选择（卡片式） ----------
-		const themeSection = controlsPanel.createDiv({ cls: 'control-section' });
+		// 可滚动设置内容区
+		const controlsScrollable = controlsPanel.createDiv({ cls: 'controls-scrollable' });
+
+		// ---------- 主题选择（卡片式 / 紧凑胶囊） ----------
+		const themeSection = controlsScrollable.createDiv({ cls: 'control-section theme-section' });
 		themeSection.createDiv({ text: t('section.theme'), cls: 'section-title' });
 
 		const templateSelector = themeSection.createDiv({ cls: 'template-selector' });
 
 		SHARE_TEMPLATES.forEach((template) => {
+			const isActive = template.id === this.imageGenerator.getCurrentTemplate().id;
 			const card = templateSelector.createDiv({
-				cls: `option-card theme-card${template.id === this.imageGenerator.getCurrentTemplate().id ? ' active' : ''}`,
-				attr: { role: 'button', tabindex: '0' }
+				cls: `option-card theme-card${isActive ? ' active' : ''}`,
+				attr: { role: 'button', tabindex: '0', 'aria-label': t(template.nameKey) }
 			});
 			card.createDiv({ cls: `theme-swatch ${template.id === 'dark' ? 'swatch-dark' : 'swatch-light'}` });
-			card.createDiv({ cls: 'option-label', text: t(template.nameKey) });
+			
+			const labelContainer = card.createDiv({ cls: 'option-label-wrap' });
+			labelContainer.createDiv({ cls: 'option-label', text: t(template.nameKey) });
 
 			const activateTemplate = async () => {
 				templateSelector.findAll('.option-card').forEach((el) => el.removeClass('active'));
@@ -82,7 +88,7 @@ export class TextPreviewModal extends Modal {
 		});
 
 		// ---------- 样式选择 ----------
-		const styleSection = controlsPanel.createDiv({ cls: 'control-section' });
+		const styleSection = controlsScrollable.createDiv({ cls: 'control-section style-section' });
 		styleSection.createDiv({ text: t('section.style'), cls: 'section-title' });
 
 		const styleSelector = styleSection.createDiv({ cls: 'style-selector' });
@@ -91,10 +97,11 @@ export class TextPreviewModal extends Modal {
 			const isActive = style.id === this.imageGenerator.getCurrentStyle();
 			const card = styleSelector.createDiv({
 				cls: `option-card style-card${isActive ? ' active' : ''}`,
-				attr: { role: 'button', tabindex: '0', 'data-style': style.id }
+				attr: { role: 'button', tabindex: '0', 'data-style': style.id, 'aria-label': t(style.nameKey) }
 			});
-			card.createDiv({ cls: 'option-label', text: t(style.nameKey) });
-			card.createDiv({ cls: 'option-desc', text: t(style.descKey) });
+			const textWrap = card.createDiv({ cls: 'style-card-text' });
+			textWrap.createDiv({ cls: 'option-label', text: t(style.nameKey) });
+			textWrap.createDiv({ cls: 'option-desc', text: t(style.descKey) });
 
 			const activateStyle = async () => {
 				styleSelector.findAll('.option-card').forEach((el) => el.removeClass('active'));
@@ -114,33 +121,32 @@ export class TextPreviewModal extends Modal {
 			});
 		});
 
-		controlsPanel.createDiv({ cls: 'flex-spacer' });
+		// ---------- 导出操作区域 (桌面在侧栏底部，移动端固定底部工具条) ----------
+		const exportSection = controlsPanel.createDiv({ cls: 'control-section export-section' });
+		exportSection.createDiv({ text: t('section.export'), cls: 'section-title desktop-only-title' });
 
-		// ---------- 导出区域 ----------
-		const exportSection = controlsPanel.createDiv({ cls: 'control-section download-section' });
-		exportSection.createDiv({ text: t('section.export'), cls: 'section-title' });
-
-		const buttonsContainer = exportSection.createDiv({ cls: 'buttons-container vertical' });
+		const buttonsContainer = exportSection.createDiv({ cls: 'buttons-container' });
 
 		// 下载按钮（主操作）
 		const downloadButton = buttonsContainer.createEl('button', {
 			cls: 'elegant-button primary-button download-button',
-			attr: { 'aria-label': t('aria.download') }
+			attr: { 'aria-label': t('aria.download'), type: 'button' }
 		});
 		downloadButton.appendChild(createIcon('download-icon') as Node);
 		downloadButton.createSpan({ text: t('action.download') });
 
 		// 复制按钮
 		const copyButton = buttonsContainer.createEl('button', {
-			cls: 'elegant-button copy-button',
-			attr: { 'aria-label': t('aria.copy') }
+			cls: 'elegant-button secondary-button copy-button',
+			attr: { 'aria-label': t('aria.copy'), type: 'button' }
 		});
 		copyButton.appendChild(createIcon('copy-icon') as Node);
 		copyButton.createSpan({ text: t('action.copy') });
 
-		// ---------- 右侧预览面板 ----------
+		// ---------- 预览面板 (桌面在右，移动端在顶部/主体) ----------
 		const previewPanel = container.createDiv({ cls: 'preview-panel' });
-		previewPanel.createDiv({ text: t('panel.preview'), cls: 'panel-title preview-title' });
+		const previewHeader = previewPanel.createDiv({ cls: 'preview-header' });
+		previewHeader.createDiv({ text: t('panel.preview'), cls: 'panel-title preview-title' });
 
 		const canvasContainer = previewPanel.createDiv({ cls: 'canvas-container' });
 
